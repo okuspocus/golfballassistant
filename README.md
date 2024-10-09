@@ -88,7 +88,9 @@ The assistant can also display golf ball offers through integration with the Ama
 1. **Install dependencies**:
    - Ensure you're in the root directory of your project and install the necessary packages:
      ```bash
-     npm install
+     npm install next react react-dom axios openai
+     npm install tailwindcss postcss autoprefixer
+     npm install dotenv
      ```
 
 2. **Set up environment variables**:
