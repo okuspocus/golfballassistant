@@ -1,0 +1,195 @@
+"use client";
+
+import { useChat } from "ai/react";
+import { useEffect, useRef, useState } from "react";
+
+export default function Chat() {
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    append,
+  } = useChat();
+
+  const [name, setName] = useState(""); // Estado para el nombre del usuario
+  const [email, setEmail] = useState(""); // Estado para el email del usuario
+  const [emailSent, setEmailSent] = useState(false); // Estado para saber si el email se ha enviado
+  const [acceptsPromos, setAcceptsPromos] = useState(false); // Estado para la casilla de verificación
+  const [showPopup, setShowPopup] = useState(false); // Estado para mostrar el popup
+  const [error, setError] = useState(""); // Estado para los mensajes de error
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendEmail = async () => {
+    if (!email || !name) {
+      setError("Por favor, introduce un nombre y un email válidos.");
+      return;
+    }
+  
+    const answers = messages
+      .map((m) => `${m.role === "user" ? "Golfer" : "GolfBallAdvisor"}: ${m.content}`)
+      .join("\n");
+  
+    try {
+      const response = await fetch("https://6woqc382ag.execute-api.eu-west-1.amazonaws.com/prod", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          acceptsPromos: acceptsPromos,
+          answers: answers,
+        }),
+      });
+  
+      if (!response.ok) {
+        // Si la respuesta no es OK, intentamos extraer el mensaje de error
+        const errorResponse = await response.json();
+        setError(`No se pudo enviar el email. Error: ${errorResponse.message || "Error desconocido"}`);
+        return;
+      }
+  
+      // Intentamos parsear la respuesta como JSON
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        setError("No se pudo interpretar la respuesta del servidor.");
+        console.error("Error al parsear la respuesta JSON:", parseError);
+        return;
+      }
+  
+      setEmailSent(true);
+      alert(data.message || "¡Email enviado con éxito!"); // Mostrar mensaje de éxito
+      closePopup();  // Cerrar el popup solo si el envío es exitoso
+    } catch (error: unknown) {
+      console.error("Error al enviar el email:", error);
+      setError(`Ocurrió un error al enviar el email: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
+  const handleRequestGuide = () => {
+    setShowPopup(true);
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
+    setError(""); // Limpiar el error al cerrar el popup
+  };
+
+  const handlePopupSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!acceptsPromos) {
+      setError("Es necesario aceptar el envío de correos puntuales con descuentos u ofertas. Puedes darte de baja en cualquier momento.");
+      return;
+    }
+    handleSendEmail(); // Enviar email pero no cerrar el popup inmediatamente
+  };
+
+  return (
+    <div className="flex flex-col w-full h-screen max-w-md py-24 mx-auto overflow-hidden">
+      {/* Área de visualización de los mensajes del chat */}
+      <div className="overflow-auto w-full mb-8 px-4 flex-grow" ref={messagesContainerRef}>
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`whitespace-pre-wrap ${
+              m.role === "user"
+                ? "bg-green-700 p-3 m-2 rounded-lg"
+                : "bg-slate-700 p-3 m-2 rounded-lg"
+            }`}
+          >
+            {m.role === "user" ? "Golfer: " : "GolfBallAdvisor: "}
+            {m.content}
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex justify-end pr-4">
+            <span className="animate-pulse text-2xl">...</span>
+          </div>
+        )}
+      </div>
+
+      {/* Área de inputs del usuario */}
+      <div className="bg-white shadow-lg p-4 border-t border-gray-300">
+        <form onSubmit={handleSubmit} className="mb-4">
+          <input
+            className="w-full p-2 mb-2 border border-gray-300 rounded shadow-xl text-black"
+            value={input}
+            placeholder="Háblale aquí a nuestra IA experta en bolas de golf..."
+            onChange={handleInputChange}
+          />
+        </form>
+      </div>
+
+      {/* Botón para solicitar la guía del comprador */}
+      <div className="fixed bottom-0 w-full max-w-md bg-white p-4 mb-4">
+        <button
+          className="bg-blue-500 w-full p-2 text-white rounded shadow-xl"
+          onClick={handleRequestGuide}
+        >
+          Quiero vuestra guía del comprador de bolas en PDF
+        </button>
+      </div>
+
+      {/* Popup para solicitar el correo electrónico y nombre */}
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded shadow-xl max-w-sm w-full">
+            <h2 className="text-lg font-bold mb-4">Introduce tus datos</h2>
+            <form onSubmit={handlePopupSubmit}>
+              <input
+                type="text"
+                className="w-full p-2 mb-4 border border-gray-300 rounded text-black"
+                placeholder="Introduce tu nombre..."
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <input
+                type="email"
+                className="w-full p-2 mb-4 border border-gray-300 rounded text-black"
+                placeholder="Introduce tu email..."
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  className="mr-2"
+                  checked={acceptsPromos}
+                  onChange={() => setAcceptsPromos(!acceptsPromos)}
+                />
+                <label className="text-sm text-gray-700">
+                  Acepto recibir correos puntualmente con descuentos u ofertas
+                </label>
+              </div>
+              {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+              <button
+                type="submit"
+                className="bg-green-500 w-full p-2 text-white rounded shadow-xl"
+              >
+                Enviar Guía
+              </button>
+            </form>
+            <button
+              className="mt-4 text-gray-500"
+              onClick={closePopup}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
