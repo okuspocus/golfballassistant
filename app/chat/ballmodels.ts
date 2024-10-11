@@ -32,5 +32,7 @@ export const knownBallModels = [
   "Titleist Tour Speed",
   "Titleist Tour Soft",
   "Titleist Velocity",
-  "Titleist TruFeel"
+  "Titleist TruFeel",
+  "Wilson Staff Model",
+  "Bridgestone Tour B RX"
 ];

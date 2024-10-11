@@ -50,7 +50,7 @@ def search():
             # Start a timer to release the throttle after 8 seconds
             def release_throttle():
                 global is_throttled
-                time.sleep(8)
+                time.sleep(5)
                 is_throttled = False
 
             # Run the throttle release in a separate thread
