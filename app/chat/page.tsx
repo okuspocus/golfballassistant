@@ -12,8 +12,21 @@ function extractBallModels(responseText: string): string[] {
 export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat();
   const [searchResults, setSearchResults] = useState<any>(null);
+  const [previousBallModels, setPreviousBallModels] = useState<string[]>([]);  // Track previous ball models
+  const [hasResults, setHasResults] = useState<boolean>(false); // Track if results were successfully fetched
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [hasResults, setHasResults] = useState<boolean>(false);
+
+  // Auto-scroll: función para desplazarse al final del contenedor de mensajes
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Scroll automático cada vez que cambian los mensajes
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Initialize with a greeting message
   useEffect(() => {
@@ -30,12 +43,18 @@ export default function Chat() {
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
+
     if (lastMessage && lastMessage.role === "assistant") {
       const ballModels = extractBallModels(lastMessage.content);
 
-      if (ballModels.length >= 2 && !hasResults) {
+      // Only trigger a new search if the ball models are new or different from previousBallModels
+      if (ballModels.length >= 2 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
+        // Save the new ball models as the previous ones
+        setPreviousBallModels(ballModels);
+
         const [firstModel, secondModel] = ballModels.slice(0, 2);
 
+        // Trigger the search for the new ball models
         Promise.all([
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
@@ -52,18 +71,21 @@ export default function Chat() {
             const data1 = response1.ok ? await response1.json() : null;
             const data2 = response2.ok ? await response2.json() : null;
 
-            const combinedResults = { results1: data1, results2: data2 };
-            console.log('Combined Results:', combinedResults);
-            setSearchResults(combinedResults);
-            setHasResults(true);
+            // Check if both responses are valid before setting results
+            if (data1 && data2) {
+              const combinedResults = { results1: data1, results2: data2 };
+              console.log('Combined Results:', combinedResults);
+              setSearchResults(combinedResults);
+              setHasResults(true); // Mark that we have valid results
+            }
           })
           .catch(err => {
-            console.error(err);
-            setSearchResults(null);
+            console.error('Error fetching results:', err);
+            setHasResults(false);  // Mark that no valid results are available
           });
       }
     }
-  }, [messages, hasResults]);
+  }, [messages, previousBallModels]);
 
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
@@ -125,7 +147,7 @@ export default function Chat() {
 
         {/* Resultados de búsqueda en el lado derecho */}
         <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full">
-          {searchResults ? (
+          {hasResults && searchResults ? (  // Only show results if there are valid ones
             <>
               {searchResults.results1?.SearchResult?.Items?.map((item: any) => (
                 <div key={item.ASIN} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
@@ -168,7 +190,11 @@ export default function Chat() {
                 </div>
               ))}
             </>
-          ) : null}
+          ) : (
+            <div className="text-center text-gray-500">
+              No results yet. Please wait for the assistant to recommend golf ball models.
+            </div>
+          )}
         </div>
       </div>
     </div>

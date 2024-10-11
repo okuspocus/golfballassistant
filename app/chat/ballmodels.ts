@@ -13,6 +13,7 @@ export const knownBallModels = [
   "Snell MTB-X",
   "Callaway Chrome Soft",
   "Volvik Vivid",
+  "Vice Drive",
   "Vice Pro",
   "Vice Pro Soft",
   "Titleist Pro V1x",
