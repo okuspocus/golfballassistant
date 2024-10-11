@@ -1,16 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // To handle routing
 
 export default function UserForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [acceptsPromos, setAcceptsPromos] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
+  const [message, setMessage] = useState(""); // To display a success message
+  const router = useRouter(); // For redirection
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Email validation function using regular expression
+  const validateEmail = (email: string) => {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailPattern.test(email);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!name || !email) {
@@ -18,35 +25,76 @@ export default function UserForm() {
       return;
     }
 
-    if (!acceptsPromos) {
-      setError("You must agree to receive occasional emails with discounts or offers.");
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
       return;
     }
 
-    // Guardar los datos en sessionStorage
-    sessionStorage.setItem("userName", name);
-    sessionStorage.setItem("userEmail", email);
+    if (!acceptsPromos) {
+      setError("You must agree to receive occasional emails with discounts/offers. We don't spam.");
+      return;
+    }
 
-    // Redirigir al chat
-    router.push("/chat");
+    try {
+      // Call the backend API to send the verification email
+      const response = await fetch('/api/sendVerification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(data.message); // Show success message like 'Email sent successfully'
+        setError(""); // Clear previous errors
+      } else {
+        setError(data.message || "An error occurred while sending the verification email.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("An error occurred while sending the verification email.");
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded shadow-xl max-w-sm w-full">
-        <h2 className="text-lg font-bold mb-4">Enter your details</h2>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-500 to-green-500">
+      <header className="bg-white w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md">
+        <div className="text-center">
+          <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
+            golfballassistant
+          </h1>
+          <p className="text-lg font-bold text-gray-700 mt-2">
+            Golf balls look the same. They are not.
+          </p>
+        </div>
+      </header>
+
+      {/* Centered Persuasive Text */}
+      <div className="flex flex-col items-center justify-center mt-32 mb-8 text-center">
+        <p className="text-4xl font-semibold text-white mb-4">
+          There is an ideal ball for every golfer.
+        </p>
+        <p className="text-2xl font-light text-white">
+          Do you know which one is yours?
+        </p>
+      </div>
+
+      {/* Registration Form with modern design */}
+      <div className="bg-white p-8 mt-6 rounded-3xl shadow-2xl max-w-md w-full text-center transition-all duration-500 transform hover:scale-105">
+        <h2 className="text-xl font-bold mb-4 text-gray-800">Enter your details</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            className="w-full p-2 mb-4 border border-gray-300 rounded text-black"
-            placeholder="Introduce tu nombre..."
+            className="w-full p-4 mb-4 bg-gray-100 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-black"
+            placeholder="Enter your name..."
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
             type="email"
-            className="w-full p-2 mb-4 border border-gray-300 rounded text-black"
-            placeholder="Introduce tu email..."
+            className="w-full p-4 mb-4 bg-gray-100 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-black"
+            placeholder="Enter your email..."
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -57,20 +105,23 @@ export default function UserForm() {
               checked={acceptsPromos}
               onChange={() => setAcceptsPromos(!acceptsPromos)}
             />
-            <label className="text-sm text-gray-700">
-            I agree to receive emails with discounts or offers from time to time
+            <label className="text-sm text-gray-600">
+              I agree to receive emails with discounts or offers from time to time.
             </label>
           </div>
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {message && <p className="text-green-500 text-sm mb-4">{message}</p>}
           <button
             type="submit"
-            className="bg-green-500 w-full p-2 text-white rounded shadow-xl"
+            className="w-full py-3 text-white bg-gradient-to-r from-green-400 to-blue-500 rounded-full shadow-xl hover:from-green-500 hover:to-blue-600 transition-all focus:outline-none focus:ring-4 focus:ring-blue-500"
           >
-            Enter the Chat with our AI
+            Chat with our AI-Powered Assistant
           </button>
         </form>
       </div>
     </div>
   );
 }
+
+
 

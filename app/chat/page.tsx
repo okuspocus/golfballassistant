@@ -1,15 +1,17 @@
 "use client"; // Add this at the top
 
-import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
-import { knownBallModels } from "./ballmodels";  // Importar desde ballmodels.ts
+import { useRouter } from "next/navigation"; // For handling redirection
+import { useChat } from "ai/react";
+import { knownBallModels } from "./ballmodels";  // Import from ballmodels.ts
 
-// Función para extraer los modelos de bolas del texto del asistente
+// Function to extract ball models from the assistant's text
 function extractBallModels(responseText: string): string[] {
   return knownBallModels.filter((model) => responseText.includes(model));
 }
 
 export default function Chat() {
+  const router = useRouter(); // For redirection
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat();
   const [searchResults, setSearchResults] = useState<any>(null);
   const [previousBallModels, setPreviousBallModels] = useState<string[]>([]);  // Track previous ball models
@@ -17,14 +19,25 @@ export default function Chat() {
   const [isFadingIn, setIsFadingIn] = useState(false); // Control fade-in
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll: función para desplazarse al final del contenedor de mensajes
+  // Check if the user is logged in by verifying sessionStorage
+  useEffect(() => {
+    const userName = sessionStorage.getItem("userName");
+    const userEmail = sessionStorage.getItem("userEmail");
+
+    if (!userName || !userEmail) {
+      // If user is not registered, redirect to the homepage or registration page
+      router.push("/");
+    }
+  }, [router]);
+
+  // Auto-scroll function to move to the bottom of the message container
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   };
 
-  // Scroll automático cada vez que cambian los mensajes
+  // Auto-scroll whenever messages are updated
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -36,11 +49,11 @@ export default function Chat() {
         {
           id: 'welcome',
           role: 'assistant',
-          content: `Let's find the best golf ball for you and feel free to use linked related results on the right side!`
+          content: `Let's find the best golf ball for you! Feel free to use the linked related results on the right side!`
         }
       ]);
     }
-  }, []); 
+  }, [setMessages, messages.length]);
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
@@ -124,10 +137,8 @@ export default function Chat() {
                   m.role === "user" ? "bg-green-100 text-black" : "bg-blue-100 text-black"
                 }`}
               >
-                <span className={m.role === "user" ? "player-tag" : "assistant-tag"}>
-                  {m.role === "user" ? "Player" : "GolfBallAssistant"}:
-                </span>
-                {` ${m.content}`}
+                {m.role === "user" ? `Player: ` : "GolfBallAssistant: "}
+                {m.content}
               </div>
             ))}
             {isLoading && (
@@ -202,21 +213,11 @@ export default function Chat() {
           )}
         </div>
 
-        {/* Styles for tags and fade-in animation */}
+        {/* Fade-in animation */}
         <style jsx>{`
           .fade-in {
             opacity: 0;
             animation: fadeIn 3s forwards;
-          }
-
-          .player-tag {
-            color: green;
-            font-weight: bold;
-          }
-
-          .assistant-tag {
-            color: blue;
-            font-weight: bold;
           }
 
           @keyframes fadeIn {
