@@ -58,7 +58,14 @@ export default function UserForm() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-500 to-green-500">
+    <div className="relative flex flex-col items-center justify-center min-h-screen">
+      {/* Background image with blur */}
+      <div className="absolute inset-0 bg-cover bg-center filter blur-lg brightness-75" style={{ backgroundImage: 'url("/golf-course.jpg")' }}></div>
+
+      {/* Overlay to darken the background */}
+      <div className="absolute inset-0 bg-black opacity-40"></div>
+
+      {/* Main content */}
       <header className="bg-white w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md">
         <div className="text-center">
           <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
@@ -71,7 +78,7 @@ export default function UserForm() {
       </header>
 
       {/* Centered Persuasive Text */}
-      <div className="flex flex-col items-center justify-center mt-32 mb-8 text-center">
+      <div className="flex flex-col items-center justify-center mt-32 mb-8 text-center z-20">
         <p className="text-4xl font-semibold text-white mb-4">
           There is an ideal ball for every golfer.
         </p>
@@ -81,7 +88,7 @@ export default function UserForm() {
       </div>
 
       {/* Registration Form with modern design */}
-      <div className="bg-white p-8 mt-6 rounded-3xl shadow-2xl max-w-md w-full text-center transition-all duration-500 transform hover:scale-105">
+      <div className="relative z-20 bg-white p-8 mt-6 rounded-3xl shadow-2xl max-w-md w-full text-center transition-all duration-500 transform hover:scale-105">
         <h2 className="text-xl font-bold mb-4 text-gray-800">Enter your details</h2>
         <form onSubmit={handleSubmit}>
           <input
@@ -101,7 +108,7 @@ export default function UserForm() {
           <div className="flex items-center mb-4">
             <input
               type="checkbox"
-              className="mr-2"
+              className="mr-2 w-6 h-6" // Make the checkbox larger
               checked={acceptsPromos}
               onChange={() => setAcceptsPromos(!acceptsPromos)}
             />

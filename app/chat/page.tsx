@@ -152,7 +152,7 @@ export default function Chat() {
               <input
                 className="w-full p-4 mb-2 border-4 border-blue-400 rounded-lg shadow-lg bg-white focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-400 text-black text-lg transition-all duration-300 ease-in-out transform hover:scale-102"
                 value={input}
-                placeholder="START HERE saying hello to our IA Golf Assistant..."
+                placeholder="START HERE say hello to our AI-Powered golf assistant..."
                 onChange={handleInputChange}
               />
             </form>
