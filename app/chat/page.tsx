@@ -79,8 +79,19 @@ export default function Chat() {
       </header>
 
       <div className="flex flex-row w-full h-full mt-24 mx-auto overflow-hidden">
-        <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300">
-          <div className="flex-grow overflow-auto px-4" ref={messagesContainerRef}>
+        {/* Conversación con la imagen de fondo */}
+        <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300 relative">
+          {/* Imagen de fondo */}
+          <div 
+            className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50" 
+            style={{ 
+              backgroundImage: 'url("/golf-ball.jpg")',
+              pointerEvents: 'none',
+              filter: 'blur(8px)'  // Aplica desenfoque
+            }} 
+          ></div>
+
+          <div className="relative z-10 flex-grow overflow-auto px-4" ref={messagesContainerRef}>
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -99,10 +110,11 @@ export default function Chat() {
             )}
           </div>
 
+          {/* Caja de texto destacada */}
           <div className="bg-white shadow-lg p-4 border-t border-gray-300">
             <form onSubmit={handleSubmit} className="mb-4">
               <input
-                className="w-full p-3 mb-2 border-2 border-green-500 rounded-lg shadow-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-black"
+                className="w-full p-4 mb-2 border-4 border-blue-400 rounded-lg shadow-lg bg-white focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-400 text-black text-lg transition-all duration-300 ease-in-out transform hover:scale-102"
                 value={input}
                 placeholder="START HERE saying hello to our IA Golf Assistant..."
                 onChange={handleInputChange}
@@ -111,6 +123,7 @@ export default function Chat() {
           </div>
         </div>
 
+        {/* Resultados de búsqueda en el lado derecho */}
         <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full">
           {searchResults ? (
             <>
@@ -161,3 +174,4 @@ export default function Chat() {
     </div>
   );
 }
+
