@@ -124,8 +124,10 @@ export default function Chat() {
                   m.role === "user" ? "bg-green-100 text-black" : "bg-blue-100 text-black"
                 }`}
               >
-                {m.role === "user" ? `Player: ` : "GolfBallAssistant: "}
-                {m.content}
+                <span className={m.role === "user" ? "player-tag" : "assistant-tag"}>
+                  {m.role === "user" ? "Player" : "GolfBallAssistant"}:
+                </span>
+                {` ${m.content}`}
               </div>
             ))}
             {isLoading && (
@@ -200,11 +202,21 @@ export default function Chat() {
           )}
         </div>
 
-        {/* Fade-in animation */}
+        {/* Styles for tags and fade-in animation */}
         <style jsx>{`
           .fade-in {
             opacity: 0;
             animation: fadeIn 3s forwards;
+          }
+
+          .player-tag {
+            color: green;
+            font-weight: bold;
+          }
+
+          .assistant-tag {
+            color: blue;
+            font-weight: bold;
           }
 
           @keyframes fadeIn {
@@ -217,4 +229,5 @@ export default function Chat() {
     </div>
   );
 }
+
 
