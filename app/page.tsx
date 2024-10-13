@@ -65,7 +65,7 @@ export default function UserForm() {
         <meta name="keywords" content="ai golf balls, golf balls ai, golf ball recommender, golf ball assistant" />
         <meta name="robots" content="index, follow" />
         <meta name="author" content="GolfBallAssistant" />
-        <link rel="canonical" href="https://www.golfballassistant.com" />
+        <link rel="canonical" href="https://bolas.golf/app" />
       </Head>
 
       {/* Background image with blur */}

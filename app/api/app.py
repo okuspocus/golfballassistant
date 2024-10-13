@@ -17,8 +17,8 @@ HOST = "webservices.amazon.es"
 URI_PATH = "/paapi5/searchitems"
 
 # Load AWS credentials from environment variables
-ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
-SECRET_KEY = os.getenv("AWS_SECRET_KEY")
+ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_DAN")
+SECRET_KEY = os.getenv("AWS_SECRET_KEY_DAN")
 
 if not ACCESS_KEY or not SECRET_KEY:
     raise ValueError("AWS credentials are not defined in environment variables.")
