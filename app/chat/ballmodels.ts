@@ -13,6 +13,7 @@ export const knownBallModels = [
   "Snell MTB-X",
   "Callaway Chrome Soft",
   "Volvik Vivid",
+  "Vice Drive",
   "Vice Pro",
   "Vice Pro Soft",
   "Titleist Pro V1x",
@@ -31,5 +32,9 @@ export const knownBallModels = [
   "Titleist Tour Speed",
   "Titleist Tour Soft",
   "Titleist Velocity",
-  "Titleist TruFeel"
+  "Titleist TruFeel",
+  "Wilson Staff Model",
+  "Bridgestone Tour B RX",
+  "Wilson Staff Duo Soft",
+  "Wilson Duo Soft"
 ];

@@ -1,3 +1,5 @@
+#Users
+data/users.csv
 # Logs
 logs
 *.log

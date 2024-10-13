@@ -12,8 +12,31 @@ function extractBallModels(responseText: string): string[] {
 export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat();
   const [searchResults, setSearchResults] = useState<any>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [previousBallModels, setPreviousBallModels] = useState<string[]>([]);
   const [hasResults, setHasResults] = useState<boolean>(false);
+  const [isFadingIn, setIsFadingIn] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [userName, setUserName] = useState<string | null>(null); // State to hold the user's name
+
+  // Get the user's name from sessionStorage
+  useEffect(() => {
+    const storedUserName = sessionStorage.getItem("userName");
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
+
+  // Auto-scroll: función para desplazarse al final del contenedor de mensajes
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Scroll automático cada vez que cambian los mensajes
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Initialize with a greeting message
   useEffect(() => {
@@ -30,12 +53,16 @@ export default function Chat() {
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
+
     if (lastMessage && lastMessage.role === "assistant") {
       const ballModels = extractBallModels(lastMessage.content);
 
-      if (ballModels.length >= 2 && !hasResults) {
+      // Only trigger a new search if the ball models are new or different from previousBallModels
+      if (ballModels.length >= 2 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
+        setPreviousBallModels(ballModels);
         const [firstModel, secondModel] = ballModels.slice(0, 2);
 
+        // Trigger the search for the new ball models
         Promise.all([
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
@@ -52,18 +79,25 @@ export default function Chat() {
             const data1 = response1.ok ? await response1.json() : null;
             const data2 = response2.ok ? await response2.json() : null;
 
-            const combinedResults = { results1: data1, results2: data2 };
-            console.log('Combined Results:', combinedResults);
-            setSearchResults(combinedResults);
-            setHasResults(true);
+            // Check if both responses are valid before setting results
+            if (data1 && data2) {
+              const combinedResults = { results1: data1, results2: data2 };
+              console.log('Combined Results:', combinedResults);
+              setSearchResults(combinedResults);
+              setHasResults(true); // Mark that we have valid results
+
+              // Trigger fade-in once the new data is available
+              setIsFadingIn(true);
+              setTimeout(() => setIsFadingIn(false), 3000); // Remove fade-in effect after 3 seconds
+            }
           })
           .catch(err => {
-            console.error(err);
-            setSearchResults(null);
+            console.error('Error fetching results:', err);
+            setHasResults(false);  // Mark that no valid results are available
           });
       }
     }
-  }, [messages, hasResults]);
+  }, [messages, previousBallModels, hasResults]);
 
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
@@ -79,8 +113,19 @@ export default function Chat() {
       </header>
 
       <div className="flex flex-row w-full h-full mt-24 mx-auto overflow-hidden">
-        <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300">
-          <div className="flex-grow overflow-auto px-4" ref={messagesContainerRef}>
+        {/* Conversación con la imagen de fondo */}
+        <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300 relative">
+          {/* Imagen de fondo */}
+          <div 
+            className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50" 
+            style={{ 
+              backgroundImage: 'url("/golf-ball.jpg")',
+              pointerEvents: 'none',
+              filter: 'blur(8px)'  // Aplica desenfoque
+            }} 
+          ></div>
+
+          <div className="relative z-10 flex-grow overflow-auto px-4" ref={messagesContainerRef}>
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -88,8 +133,10 @@ export default function Chat() {
                   m.role === "user" ? "bg-green-100 text-black" : "bg-blue-100 text-black"
                 }`}
               >
-                {m.role === "user" ? `Player: ` : "GolfBallAssistant: "}
-                {m.content}
+                <span className={`tag ${m.role === "user" ? "player-tag" : "assistant-tag"}`}>
+                  {m.role === "user" ? userName || "Player" : "GolfBallAssistant"}:
+                </span>
+                {` ${m.content}`}
               </div>
             ))}
             {isLoading && (
@@ -99,21 +146,23 @@ export default function Chat() {
             )}
           </div>
 
+          {/* Caja de texto destacada */}
           <div className="bg-white shadow-lg p-4 border-t border-gray-300">
             <form onSubmit={handleSubmit} className="mb-4">
               <input
-                className="w-full p-3 mb-2 border-2 border-green-500 rounded-lg shadow-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-black"
+                className="w-full p-4 mb-2 border-4 border-blue-400 rounded-lg shadow-lg bg-white focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-400 text-black text-lg transition-all duration-300 ease-in-out transform hover:scale-102"
                 value={input}
-                placeholder="START HERE saying hello to our IA Golf Assistant..."
+                placeholder="START HERE say hello to our AI-Powered golf assistant..."
                 onChange={handleInputChange}
               />
             </form>
           </div>
         </div>
 
+        {/* Resultados de búsqueda en el lado derecho */}
         <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full">
-          {searchResults ? (
-            <>
+          {hasResults && searchResults ? (  // Only show results if there are valid ones and after fade-in
+            <div className={isFadingIn ? 'fade-in' : ''}> {/* Apply fade-in */}
               {searchResults.results1?.SearchResult?.Items?.map((item: any) => (
                 <div key={item.ASIN} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
                   <h3 className="font-semibold text-center">{item.ItemInfo.Title.DisplayValue}</h3>
@@ -154,10 +203,48 @@ export default function Chat() {
                   </a>
                 </div>
               ))}
-            </>
-          ) : null}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500">
+              No results yet. Please wait for the assistant to recommend golf ball models.
+            </div>
+          )}
         </div>
+
+        {/* Styles for tags and fade-in animation */}
+        <style jsx>{`
+          .fade-in {
+            opacity: 0;
+            animation: fadeIn 3s forwards;
+          }
+
+          .tag {
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-right: 10px;
+          }
+
+          .player-tag {
+            background-color: #34d399; /* Green color for player */
+            color: white;
+          }
+
+          .assistant-tag {
+            background-color: #60a5fa; /* Blue color for assistant */
+            color: white;
+          }
+
+          @keyframes fadeIn {
+            to {
+              opacity: 1;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
 }
+
+
