@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // To handle routing
+import Head from 'next/head'; // Importa el componente Head para manejar el <head>
 
 export default function UserForm() {
   const [name, setName] = useState("");
@@ -36,7 +37,6 @@ export default function UserForm() {
     }
 
     try {
-      // Call the backend API to send the verification email
       const response = await fetch('/api/sendVerification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,6 +59,15 @@ export default function UserForm() {
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen">
+      <Head>
+        <title>AI Golf Ball Assistant - Find Your Perfect Golf Ball</title>
+        <meta name="description" content="Use our AI-powered golf ball assistant to find the perfect golf ball for you. Whether you're a beginner or a pro, there's an ideal ball for every golfer." />
+        <meta name="keywords" content="ai golf balls, golf balls ai, golf ball recommender, golf ball assistant" />
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="GolfBallAssistant" />
+        <link rel="canonical" href="https://www.golfballassistant.com" />
+      </Head>
+
       {/* Background image with blur */}
       <div className="absolute inset-0 bg-cover bg-center filter blur-lg brightness-75" style={{ backgroundImage: 'url("/golf-course.jpg")' }}></div>
 
@@ -69,7 +78,7 @@ export default function UserForm() {
       <header className="bg-white w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md">
         <div className="text-center">
           <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
-            golfballassistant
+            GolfBallAssistant
           </h1>
           <p className="text-lg font-bold text-gray-700 mt-2">
             Golf balls look the same. They are not.
@@ -80,10 +89,10 @@ export default function UserForm() {
       {/* Centered Persuasive Text */}
       <div className="flex flex-col items-center justify-center mt-32 mb-8 text-center z-20">
         <p className="text-4xl font-semibold text-white mb-4">
-          There is an ideal ball for every golfer.
+          There is an ideal golf ball for every golfer.
         </p>
         <p className="text-2xl font-light text-white">
-          Do you know which one is yours?
+          Do you know which one is yours? 
         </p>
       </div>
 
@@ -108,7 +117,7 @@ export default function UserForm() {
           <div className="flex items-center mb-4">
             <input
               type="checkbox"
-              className="mr-2 w-6 h-6" // Make the checkbox larger
+              className="mr-2 w-6 h-6"
               checked={acceptsPromos}
               onChange={() => setAcceptsPromos(!acceptsPromos)}
             />
@@ -129,6 +138,4 @@ export default function UserForm() {
     </div>
   );
 }
-
-
 
