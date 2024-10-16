@@ -8,6 +8,7 @@ export default function UserForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [acceptsPromos, setAcceptsPromos] = useState(false);
+  const [acceptsPrivacyPolicy, setAcceptsPrivacyPolicy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState(""); // To display a success message
   const router = useRouter(); // For redirection
@@ -21,22 +22,38 @@ export default function UserForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // Validate that both fields are filled
     if (!name || !email) {
       setError("Please enter a valid name and email.");
       return;
     }
 
+    // Length limitation for name to prevent abuse
+    if (name.length > 50) {
+      setError("Name is too long. Please keep it under 50 characters.");
+      return;
+    }
+
+    // Validate email format
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
+    // Check if user accepts promotional emails
     if (!acceptsPromos) {
       setError("You must agree to receive occasional emails with discounts/offers. We don't spam.");
       return;
     }
 
+    // Check if user accepts privacy policy
+    if (!acceptsPrivacyPolicy) {
+      setError("You must accept the privacy policy to proceed.");
+      return;
+    }
+
     try {
+      // Note: It's important to sanitize and validate these fields again on the server side
       const response = await fetch('/api/sendVerification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +92,7 @@ export default function UserForm() {
       <div className="absolute inset-0 bg-black opacity-40"></div>
 
       {/* Main content */}
-      <header className="bg-white w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md">
+      <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
         <div className="text-center">
           <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
             GolfBallAssistant
@@ -97,19 +114,20 @@ export default function UserForm() {
       </div>
 
       {/* Registration Form with modern design */}
-      <div className="relative z-20 bg-white p-8 mt-6 rounded-3xl shadow-2xl max-w-md w-full text-center transition-all duration-500 transform hover:scale-105">
+      <div className="relative z-20 p-8 mt-6 rounded-3xl shadow-2xl max-w-md w-full text-center transition-all duration-500 transform hover:scale-105" style={{ backgroundColor: "#B3C186" }}>
         <h2 className="text-xl font-bold mb-4 text-gray-800">Enter your details</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            className="w-full p-4 mb-4 bg-gray-100 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-black"
+            maxLength={50} // Ensures the maxlength is a number
+            className="w-full p-4 mb-4 bg-gray-100 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-[#D4E1B5] transition-all text-black"
             placeholder="Enter your name..."
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
             type="email"
-            className="w-full p-4 mb-4 bg-gray-100 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-black"
+            className="w-full p-4 mb-4 bg-gray-100 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-[#D4E1B5] transition-all text-black"
             placeholder="Enter your email..."
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -117,19 +135,31 @@ export default function UserForm() {
           <div className="flex items-center mb-4">
             <input
               type="checkbox"
-              className="mr-2 w-6 h-6"
+              className="mr-2 w-4 h-4" // Consistent size for both checkboxes
               checked={acceptsPromos}
               onChange={() => setAcceptsPromos(!acceptsPromos)}
             />
             <label className="text-sm text-gray-600">
-              I agree to receive emails with discounts or offers from time to time.
+              I agree to receive mails sometimes (No spam)
             </label>
           </div>
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          {message && <p className="text-green-500 text-sm mb-4">{message}</p>}
+          <div className="flex items-center mb-4">
+            <input
+              type="checkbox"
+              className="mr-2 w-4 h-4" // Consistent size for both checkboxes
+              checked={acceptsPrivacyPolicy}
+              onChange={() => setAcceptsPrivacyPolicy(!acceptsPrivacyPolicy)}
+            />
+            <label className="text-sm text-gray-600">
+              I agree to the <a href="/privacy-policy" className="underline text-blue-600">Privacy Policy</a>.
+            </label>
+          </div>
+          {error && <p className="text-[#b22222] text-md font-semibold mb-4">{error}</p>} {/* Rojo oscuro */}
+          {message && <p className="text-[#006400] text-lg font-semibold mb-4">{message}</p>} {/* Verde oscuro */}
           <button
             type="submit"
-            className="w-full py-3 text-white bg-gradient-to-r from-green-400 to-blue-500 rounded-full shadow-xl hover:from-green-500 hover:to-blue-600 transition-all focus:outline-none focus:ring-4 focus:ring-blue-500"
+            className="w-full py-3 text-white rounded-full shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-green-300"
+            style={{ backgroundColor: "#006400" }} // Verde oscuro para el botón
           >
             Chat with our AI-Powered Assistant
           </button>
@@ -138,4 +168,9 @@ export default function UserForm() {
     </div>
   );
 }
+
+
+
+
+
 

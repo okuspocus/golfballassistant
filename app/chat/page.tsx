@@ -101,7 +101,7 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
-      <header className="bg-white w-full py-8 fixed top-0 z-10 border-b border-gray-200">
+      <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200" style={{ backgroundColor: "#B3C186" }}>
         <div className="text-center">
           <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
             golfballassistant
@@ -227,7 +227,7 @@ export default function Chat() {
           }
 
           .player-tag {
-            background-color: #34d399; /* Green color for player */
+            background-color: #B3C186; /* Updated Green color for player */
             color: white;
           }
 
@@ -246,5 +246,4 @@ export default function Chat() {
     </div>
   );
 }
-
 
