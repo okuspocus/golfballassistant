@@ -53,51 +53,45 @@ export default function Chat() {
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-
+    console.log("Last message:", lastMessage);
+  
     if (lastMessage && lastMessage.role === "assistant") {
       const ballModels = extractBallModels(lastMessage.content);
-
-      // Solo se activa una nueva búsqueda si los modelos de bolas son nuevos o diferentes
+      console.log("Extracted ball models:", ballModels);
+  
       if (ballModels.length >= 2 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
+        console.log("Triggering search for:", ballModels);
         setPreviousBallModels(ballModels);
-        const [firstModel, secondModel] = ballModels.slice(0, 2);
-
-        // Hacer la búsqueda de los nuevos modelos de bolas
         Promise.all([
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keywords: firstModel })
+            body: JSON.stringify({ keywords: ballModels[0] })
           }),
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keywords: secondModel })
+            body: JSON.stringify({ keywords: ballModels[1] })
           })
         ])
           .then(async ([response1, response2]) => {
             const data1 = response1.ok ? await response1.json() : null;
             const data2 = response2.ok ? await response2.json() : null;
-
-            // Si ambas respuestas son válidas, combinarlas y mostrarlas
+  
             if (data1 && data2) {
               const combinedResults = [...data1, ...data2];
-              console.log('Combined Results:', combinedResults);
+              console.log("Combined results:", combinedResults);
               setSearchResults(combinedResults);
-              setHasResults(true); // Marcar que hay resultados válidos
-
-              // Aplicar un efecto fade-in una vez que los datos estén disponibles
-              setIsFadingIn(true);
-              setTimeout(() => setIsFadingIn(false), 3000); // Quitar el efecto fade-in después de 3 segundos
+              setHasResults(true);
             }
           })
-          .catch(err => {
-            console.error('Error fetching results:', err);
-            setHasResults(false);  // Marcar que no hay resultados válidos
-          });
+          .catch((err) => console.error("Error fetching results:", err));
+      } else {
+        console.log("Search not triggered. Conditions not met.");
       }
     }
   }, [messages, previousBallModels, hasResults]);
+  
 
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
