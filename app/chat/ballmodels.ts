@@ -3,6 +3,7 @@ export const knownBallModels = [
   "Titleist Pro V1",
   "Callaway Chrome Soft",
   "Callaway Supersoft",
+  "Callaway REVA",
   "TaylorMade TP5",
   "Srixon Z-Star",
   "TaylorMade Distance+",

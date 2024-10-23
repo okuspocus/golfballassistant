@@ -1,4 +1,4 @@
-//test
+
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 

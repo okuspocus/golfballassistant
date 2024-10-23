@@ -59,27 +59,44 @@ export default function Chat() {
       const ballModels = extractBallModels(lastMessage.content);
       console.log("Extracted ball models:", ballModels);
   
-      if (ballModels.length >= 2 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
+      // Si al menos hay un modelo de bola extraído, ejecuta la búsqueda
+      if (ballModels.length > 0 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
         console.log("Triggering search for:", ballModels);
         setPreviousBallModels(ballModels);
-        Promise.all([
+  
+        // Realiza la primera búsqueda
+        const fetchPromises = [
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ keywords: ballModels[0] })
           }),
-          fetch('http://127.0.0.1:5000/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keywords: ballModels[1] })
-          })
-        ])
+        ];
+  
+        // Si hay un segundo modelo, añade otra petición
+        if (ballModels.length > 1) {
+          fetchPromises.push(
+            fetch('http://127.0.0.1:5000/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ keywords: ballModels[1] })
+            })
+          );
+        }
+  
+        // Ejecuta las búsquedas
+        Promise.all(fetchPromises)
           .then(async ([response1, response2]) => {
             const data1 = response1.ok ? await response1.json() : null;
-            const data2 = response2.ok ? await response2.json() : null;
+            const data2 = response2?.ok ? await response2.json() : null;
   
-            if (data1 || data2) {
-              const combinedResults = [...data1, ...data2];
+            // Combina los resultados, si están disponibles
+            const combinedResults = [];
+            if (data1) combinedResults.push(...data1);
+            if (data2) combinedResults.push(...data2);
+  
+            // Si hay algún resultado, actualiza el estado
+            if (combinedResults.length > 0) {
               console.log("Combined results:", combinedResults);
               setSearchResults(combinedResults);
               setHasResults(true);
@@ -91,6 +108,7 @@ export default function Chat() {
       }
     }
   }, [messages, previousBallModels, hasResults]);
+  
   
 
   return (
