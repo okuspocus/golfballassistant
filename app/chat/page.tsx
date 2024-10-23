@@ -1,4 +1,4 @@
-"use client" // Add this at the top
+"use client"; // Add this at the top
 
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
@@ -7,14 +7,6 @@ import { knownBallModels } from "./ballmodels";  // Importar desde ballmodels.ts
 // Función para extraer los modelos de bolas del texto del asistente
 function extractBallModels(responseText: string): string[] {
   return knownBallModels.filter((model) => responseText.includes(model));
-}
-
-// Función para ajustar el tamaño de la imagen si es necesario
-function adjustImageUrl(imageUrl: string): string {
-  if (imageUrl.includes("SL500_")) {
-    return imageUrl.replace("SL500_", "SL75_");  // Reemplaza SL500_ por SL75_
-  }
-  return imageUrl;  // Devuelve la URL sin cambios si no incluye SL500_
 }
 
 export default function Chat() {
@@ -177,9 +169,9 @@ export default function Chat() {
                   {item.image_url && (
                     <a href={item.referral_link} target="_blank" rel="noopener noreferrer">
                       <img
-                        src={adjustImageUrl(item.image_url)}  // Ajuste del tamaño de la imagen
+                        src={item.image_url}  // Directly use image_url without any modification
                         alt={item.model_name}
-                        className="w-full h-auto max-w-[325px] max-h-[325px] object-contain"
+                        className="adjusted-image"  // Apply a CSS class to handle consistent styling
                       />
                     </a>
                   )}
@@ -199,38 +191,43 @@ export default function Chat() {
           )}
         </div>
 
-
         {/* Styles for tags and fade-in animation */}
         <style jsx>{`
-          .fade-in {
-            opacity: 0;
-            animation: fadeIn 3s forwards;
-          }
+  .fade-in {
+    opacity: 0;
+    animation: fadeIn 3s forwards;
+  }
 
-          .tag {
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-right: 10px;
-          }
+  .tag {
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-right: 10px;
+  }
 
-          .player-tag {
-            background-color: #B3C186; /* Updated Green color for player */
-            color: white;
-          }
+  .player-tag {
+    background-color: #B3C186; /* Updated Green color for player */
+    color: white;
+  }
 
-          .assistant-tag {
-            background-color: #60a5fa; /* Blue color for assistant */
-            color: white;
-          }
+  .assistant-tag {
+    background-color: #60a5fa; /* Blue color for assistant */
+    color: white;
+  }
 
-          @keyframes fadeIn {
-            to {
-              opacity: 1;
-            }
-          }
-        `}</style>
+  .adjusted-image {
+    max-width: 250px;  /* Adjust the max width of the image */
+    max-height: 250px; /* Adjust the max height of the image */
+    object-fit: contain; /* Ensures the image maintains its aspect ratio */
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+`}</style>
       </div>
     </div>
   );
