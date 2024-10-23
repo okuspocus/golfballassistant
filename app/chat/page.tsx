@@ -1,4 +1,4 @@
-"use client"; // Add this at the top
+"use client" // Add this at the top
 
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
@@ -7,6 +7,14 @@ import { knownBallModels } from "./ballmodels";  // Importar desde ballmodels.ts
 // Función para extraer los modelos de bolas del texto del asistente
 function extractBallModels(responseText: string): string[] {
   return knownBallModels.filter((model) => responseText.includes(model));
+}
+
+// Función para ajustar el tamaño de la imagen si es necesario
+function adjustImageUrl(imageUrl: string): string {
+  if (imageUrl.includes("SL500_")) {
+    return imageUrl.replace("SL500_", "SL75_");  // Reemplaza SL500_ por SL75_
+  }
+  return imageUrl;  // Devuelve la URL sin cambios si no incluye SL500_
 }
 
 export default function Chat() {
@@ -57,12 +65,12 @@ export default function Chat() {
     if (lastMessage && lastMessage.role === "assistant") {
       const ballModels = extractBallModels(lastMessage.content);
 
-      // Only trigger a new search if the ball models are new or different from previousBallModels
+      // Solo se activa una nueva búsqueda si los modelos de bolas son nuevos o diferentes
       if (ballModels.length >= 2 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
         setPreviousBallModels(ballModels);
         const [firstModel, secondModel] = ballModels.slice(0, 2);
 
-        // Trigger the search for the new ball models
+        // Hacer la búsqueda de los nuevos modelos de bolas
         Promise.all([
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
@@ -79,21 +87,21 @@ export default function Chat() {
             const data1 = response1.ok ? await response1.json() : null;
             const data2 = response2.ok ? await response2.json() : null;
 
-            // Check if both responses are valid before setting results
+            // Si ambas respuestas son válidas, combinarlas y mostrarlas
             if (data1 && data2) {
-              const combinedResults = { results1: data1, results2: data2 };
+              const combinedResults = [...data1, ...data2];
               console.log('Combined Results:', combinedResults);
               setSearchResults(combinedResults);
-              setHasResults(true); // Mark that we have valid results
+              setHasResults(true); // Marcar que hay resultados válidos
 
-              // Trigger fade-in once the new data is available
+              // Aplicar un efecto fade-in una vez que los datos estén disponibles
               setIsFadingIn(true);
-              setTimeout(() => setIsFadingIn(false), 3000); // Remove fade-in effect after 3 seconds
+              setTimeout(() => setIsFadingIn(false), 3000); // Quitar el efecto fade-in después de 3 segundos
             }
           })
           .catch(err => {
             console.error('Error fetching results:', err);
-            setHasResults(false);  // Mark that no valid results are available
+            setHasResults(false);  // Marcar que no hay resultados válidos
           });
       }
     }
@@ -161,45 +169,25 @@ export default function Chat() {
 
         {/* Resultados de búsqueda en el lado derecho */}
         <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full">
-          {hasResults && searchResults ? (  // Only show results if there are valid ones and after fade-in
-            <div className={isFadingIn ? 'fade-in' : ''}> {/* Apply fade-in */}
-              {searchResults.results1?.SearchResult?.Items?.map((item: any) => (
-                <div key={item.ASIN} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
-                  <h3 className="font-semibold text-center">{item.ItemInfo.Title.DisplayValue}</h3>
-                  {item.Images?.Primary?.Small?.URL && (
-                    <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer">
+          {hasResults && searchResults ? (  // Solo mostrar resultados si hay datos válidos
+            <div className={isFadingIn ? 'fade-in' : ''}> {/* Aplicar fade-in */}
+              {searchResults.map((item: any, index: number) => (
+                <div key={index} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
+                  <h3 className="font-semibold text-center">{item.model_name}</h3>
+                  {item.image_url && (
+                    <a href={item.referral_link} target="_blank" rel="noopener noreferrer">
                       <img
-                        src={item.Images.Primary.Small.URL.replace("_SL75_", "_SL500_")}
-                        alt={item.ItemInfo.Title.DisplayValue}
+                        src={adjustImageUrl(item.image_url)}  // Ajuste del tamaño de la imagen
+                        alt={item.model_name}
                         className="w-full h-auto max-w-[325px] max-h-[325px] object-contain"
                       />
                     </a>
                   )}
-                  {item.Offers?.Listings?.[0]?.Price?.DisplayAmount && (
-                    <p className="text-center">Precio: {item.Offers.Listings[0].Price.DisplayAmount || "No disponible"}</p>
+                  {item.price && (
+                    <p className="text-center">Precio: {item.price || "No disponible"}</p>
                   )}
-                  <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
-                    Ver en Amazon
-                  </a>
-                </div>
-              ))}
-              {searchResults.results2?.SearchResult?.Items?.map((item: any) => (
-                <div key={item.ASIN} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
-                  <h3 className="font-semibold text-center">{item.ItemInfo.Title.DisplayValue}</h3>
-                  {item.Images?.Primary?.Small?.URL && (
-                    <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={item.Images.Primary.Small.URL.replace("_SL75_", "_SL500_")}
-                        alt={item.ItemInfo.Title.DisplayValue}
-                        className="w-full h-auto max-w-[400px] max-h-[400px] object-contain"
-                      />
-                    </a>
-                  )}
-                  {item.Offers?.Listings?.[0]?.Price?.DisplayAmount && (
-                    <p className="text-center">Precio: {item.Offers.Listings[0].Price.DisplayAmount || "No disponible"}</p>
-                  )}
-                  <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
-                    Ver en Amazon
+                  <a href={item.referral_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
+                    Ver más detalles
                   </a>
                 </div>
               ))}
@@ -210,6 +198,7 @@ export default function Chat() {
             </div>
           )}
         </div>
+
 
         {/* Styles for tags and fade-in animation */}
         <style jsx>{`

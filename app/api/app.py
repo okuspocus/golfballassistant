@@ -2,11 +2,13 @@ import os
 import psycopg2
 from flask import Flask, request, jsonify
 from psycopg2.extras import RealDictCursor
+from flask_cors import CORS  # Import flask-cors
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-# Cargar las variables de entorno
-DATABASE_URL = os.getenv('DATABASE_URL', "dbname=golfballsdb user=golfuser password=strongpassword host=localhost")
+# Cargar las variables de entorno para la conexión con PostgreSQL
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 # Función para conectarse a la base de datos
 def get_db_connection():
@@ -32,6 +34,7 @@ def search():
 
     cursor = conn.cursor()
 
+    # Consulta para buscar bolas de golf por nombre usando el operador ILIKE
     query = """
         SELECT model_name, image_url, referral_link, price 
         FROM golf_balls 
@@ -43,12 +46,14 @@ def search():
     conn.close()
 
     if results:
-        return jsonify(results)
+        return jsonify(results)  # Devolver los resultados directamente como JSON
     else:
         return jsonify({"error": "No results found"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
 
 
 
