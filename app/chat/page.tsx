@@ -78,7 +78,7 @@ export default function Chat() {
             const data1 = response1.ok ? await response1.json() : null;
             const data2 = response2.ok ? await response2.json() : null;
   
-            if (data1 && data2) {
+            if (data1 || data2) {
               const combinedResults = [...data1, ...data2];
               console.log("Combined results:", combinedResults);
               setSearchResults(combinedResults);
