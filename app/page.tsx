@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Head from 'next/head'; 
-import translations from '../translations/translations';  // Assuming your translations file is named 'translations.ts'
+import translations from '../translations/translations';
 
 export default function UserForm() {
   const [name, setName] = useState("");
@@ -12,18 +12,18 @@ export default function UserForm() {
   const [acceptsPrivacyPolicy, setAcceptsPrivacyPolicy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [progress, setProgress] = useState(0);
 
-  // Restrict locale type to 'en' | 'es' | 'ca'
   const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
   const router = useRouter();
 
   useEffect(() => {
-    const userLocale = navigator.language || 'en'; // Default to 'en' if language isn't available
+    const userLocale = navigator.language || 'en';
     const detectedLocale = userLocale.startsWith('es') ? 'es' : userLocale.startsWith('ca') ? 'ca' : 'en';
-    setLocale(detectedLocale as 'en' | 'es' | 'ca'); // Cast as one of the allowed values
+    setLocale(detectedLocale as 'en' | 'es' | 'ca');
   }, []);
 
-  const t = translations[locale]; // TypeScript knows locale is valid
+  const t = translations[locale];
 
   const validateEmail = (email: string) => {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -33,7 +33,6 @@ export default function UserForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validate form
     if (!name || !email) {
       setError(t.error_valid_name_email);
       return;
@@ -55,6 +54,8 @@ export default function UserForm() {
       return;
     }
 
+    setError("");
+    setProgress(10);
     try {
       const response = await fetch('/api/sendVerification', {
         method: 'POST',
@@ -63,20 +64,31 @@ export default function UserForm() {
       });
 
       const data = await response.json();
+
+      setProgress(100); 
       if (response.ok) {
         setMessage(data.message);
         setError("");
       } else {
         setError(data.message || t.error_sending_email);
+        setProgress(0);
       }
     } catch (err) {
       console.error(err);
       setError(t.error_sending_email);
+      setProgress(0);
     }
   };
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen">
+    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden">
       <Head>
         <title>{t.meta_title}</title>
         <meta name="description" content={t.meta_description} />
@@ -105,20 +117,19 @@ export default function UserForm() {
       </header>
 
       {/* Centered Persuasive Text */}
-      <div className="flex flex-col items-center justify-center mt-32 mb-8 text-center z-20">
-        <p className="text-4xl font-semibold text-white mb-4">
+      <div className="flex flex-col items-center justify-center mt-48 mb-8 text-center z-20">
+        <p className="text-4xl font-semibold text-white mb-4 max-w-md">
           {t.persuasive_text}
         </p>
-        <p className="text-2xl font-light text-white">
+        <p className="text-2xl font-light text-white max-w-md">
           {t.question_text}
         </p>
       </div>
 
       {/* Registration Form */}
-      <div className="relative z-20 p-8 mt-6 rounded-3xl shadow-2xl max-w-md w-full text-center transition-all duration-500 transform hover:scale-105"
-           style={{ backgroundColor: "#B3C186" }}> {/* Updated the background color */}
+      <div className="relative z-20 p-8 mt-6 bg-[#B3C186] rounded-3xl shadow-2xl max-w-md w-full text-center transition-all duration-500 transform hover:scale-105">
         <h2 className="text-xl font-bold mb-4 text-gray-800">{t.enter_details}</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
             maxLength={50}
@@ -158,18 +169,29 @@ export default function UserForm() {
           </div>
           {error && <p className="text-[#b22222] text-md font-semibold mb-4">{error}</p>}
           {message && <p className="text-[#006400] text-lg font-semibold mb-4">{message}</p>}
+          
           <button
             type="submit"
-            className="w-full py-3 text-white rounded-full shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-green-300"
-            style={{ backgroundColor: "#006400" }}
+            className="w-full py-3 text-black rounded-full shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-green-300 relative overflow-hidden"
+            style={{ backgroundColor: "#5BA862", position: 'relative' }}  // Lighter green color
+            disabled={progress > 0 && progress < 100}
           >
-            {t.submit_text}
+            <div
+              className="absolute top-0 left-0 h-full bg-white transition-all duration-300"
+              style={{ width: `${progress}%`, zIndex: 0 }}
+            ></div>
+            <span className="relative z-10">{t.submit_text}</span> {/* Ensure text is on top */}
           </button>
         </form>
       </div>
     </div>
   );
 }
+
+
+
+
+
 
 
 

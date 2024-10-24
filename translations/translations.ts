@@ -48,7 +48,7 @@ export const translations: Record<'en' | 'es' | 'ca', {
   es: {
     meta_title: 'Asistente de Pelotas de Golf - Encuentra tu Pelota Perfecta',
     meta_description: 'Usa nuestro asistente de pelotas de golf con IA para encontrar la pelota perfecta para ti.',
-    persuasive_text: 'Hay una pelota de golf ideal para cada jugador.',
+    persuasive_text: 'Hay una bola de golf ideal para cada jugador.',
     question_text: '¿Sabes cuál es la tuya?',
     enter_details: 'Introduce tus datos',
     enter_name: 'Introduce tu nombre...',
@@ -71,7 +71,7 @@ export const translations: Record<'en' | 'es' | 'ca', {
   ca: {
     meta_title: 'Assistent de Pilotes de Golf - Troba la Pilota Perfecta',
     meta_description: 'Utilitza el nostre assistent de pilotes de golf amb IA per trobar la pilota perfecta per a tu.',
-    persuasive_text: 'Hi ha una pilota de golf ideal per a cada jugador.',
+    persuasive_text: 'Hi ha una bola de golf ideal per a cada jugador.',
     question_text: 'Saps quina és la teva?',
     enter_details: 'Entra les teves dades',
     enter_name: 'Entra el teu nom...',
