@@ -2,9 +2,10 @@
 
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
-import { knownBallModels } from "./ballmodels";  // Importar desde ballmodels.ts
+import { knownBallModels } from "./ballmodels";  // Import from ballmodels.ts
+import translations from '../../translations/translations'; // Import translations
 
-// Función para extraer los modelos de bolas del texto del asistente
+// Function to extract ball models from assistant's response
 function extractBallModels(responseText: string): string[] {
   return knownBallModels.filter((model) => responseText.includes(model));
 }
@@ -16,9 +17,22 @@ export default function Chat() {
   const [hasResults, setHasResults] = useState<boolean>(false);
   const [isFadingIn, setIsFadingIn] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [userName, setUserName] = useState<string | null>(null); // State to hold the user's name
+  const [userName, setUserName] = useState<string | null>(null);
 
-  // Get the user's name from sessionStorage
+  // Locale management
+  const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
+  const [localeLoaded, setLocaleLoaded] = useState(false); // Track if locale has been set
+
+  useEffect(() => {
+    const userLocale = navigator.language || 'en'; // Detect browser language
+    const detectedLocale = userLocale.startsWith('es') ? 'es' : userLocale.startsWith('ca') ? 'ca' : 'en';
+    setLocale(detectedLocale as 'en' | 'es' | 'ca');
+    setLocaleLoaded(true);  // Mark locale as loaded
+  }, []);
+
+  const t = translations[locale]; // Get the correct translation based on locale
+
+  // Get username from sessionStorage
   useEffect(() => {
     const storedUserName = sessionStorage.getItem("userName");
     if (storedUserName) {
@@ -26,45 +40,37 @@ export default function Chat() {
     }
   }, []);
 
-  // Auto-scroll: función para desplazarse al final del contenedor de mensajes
+  // Auto-scroll function to scroll to the bottom of the messages container
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   };
 
-  // Scroll automático cada vez que cambian los mensajes
+  // Scroll automatically whenever messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Initialize with a greeting message
+  // Initialize with a greeting message after locale is set
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && localeLoaded) {  // Ensure locale is loaded before setting message
       setMessages([
         {
           id: 'welcome',
           role: 'assistant',
-          content: `Let's find the best golf ball for you and feel free to use linked related results on the right side!`
+          content: t.greeting_message // Use translated greeting message
         }
       ]);
     }
-  }, []); 
+  }, [localeLoaded, locale, setMessages, messages.length, t.greeting_message]);
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-    console.log("Last message:", lastMessage);
-  
     if (lastMessage && lastMessage.role === "assistant") {
       const ballModels = extractBallModels(lastMessage.content);
-      console.log("Extracted ball models:", ballModels);
-  
-      // Si al menos hay un modelo de bola extraído, ejecuta la búsqueda
       if (ballModels.length > 0 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
-        console.log("Triggering search for:", ballModels);
         setPreviousBallModels(ballModels);
-  
-        // Realiza la primera búsqueda
         const fetchPromises = [
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
@@ -72,8 +78,7 @@ export default function Chat() {
             body: JSON.stringify({ keywords: ballModels[0] })
           }),
         ];
-  
-        // Si hay un segundo modelo, añade otra petición
+
         if (ballModels.length > 1) {
           fetchPromises.push(
             fetch('http://127.0.0.1:5000/search', {
@@ -83,33 +88,25 @@ export default function Chat() {
             })
           );
         }
-  
-        // Ejecuta las búsquedas
+
         Promise.all(fetchPromises)
           .then(async ([response1, response2]) => {
             const data1 = response1.ok ? await response1.json() : null;
             const data2 = response2?.ok ? await response2.json() : null;
-  
-            // Combina los resultados, si están disponibles
+
             const combinedResults = [];
             if (data1) combinedResults.push(...data1);
             if (data2) combinedResults.push(...data2);
-  
-            // Si hay algún resultado, actualiza el estado
+
             if (combinedResults.length > 0) {
-              console.log("Combined results:", combinedResults);
               setSearchResults(combinedResults);
               setHasResults(true);
             }
           })
           .catch((err) => console.error("Error fetching results:", err));
-      } else {
-        console.log("Search not triggered. Conditions not met.");
       }
     }
-  }, [messages, previousBallModels, hasResults]);
-  
-  
+  }, [messages, previousBallModels]);
 
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
@@ -125,15 +122,15 @@ export default function Chat() {
       </header>
 
       <div className="flex flex-row w-full h-full mt-24 mx-auto overflow-hidden">
-        {/* Conversación con la imagen de fondo */}
+        {/* Conversation with background image */}
         <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300 relative">
-          {/* Imagen de fondo */}
+          {/* Background image */}
           <div 
             className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50" 
             style={{ 
               backgroundImage: 'url("/golf-ball.jpg")',
               pointerEvents: 'none',
-              filter: 'blur(8px)'  // Aplica desenfoque
+              filter: 'blur(8px)'  // Apply blur effect
             }} 
           ></div>
 
@@ -158,23 +155,23 @@ export default function Chat() {
             )}
           </div>
 
-          {/* Caja de texto destacada */}
+          {/* Input box */}
           <div className="bg-white shadow-lg p-4 border-t border-gray-300">
             <form onSubmit={handleSubmit} className="mb-4">
               <input
                 className="w-full p-4 mb-2 border-4 border-blue-400 rounded-lg shadow-lg bg-white focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-400 text-black text-lg transition-all duration-300 ease-in-out transform hover:scale-102"
                 value={input}
-                placeholder="START HERE say hello to our AI-Powered golf assistant..."
+                placeholder={t.start_placeholder}  // Translated placeholder
                 onChange={handleInputChange}
               />
             </form>
           </div>
         </div>
 
-        {/* Resultados de búsqueda en el lado derecho */}
+        {/* Search results on the right side */}
         <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full">
-          {hasResults && searchResults ? (  // Solo mostrar resultados si hay datos válidos
-            <div className={isFadingIn ? 'fade-in' : ''}> {/* Aplicar fade-in */}
+          {hasResults && searchResults ? (
+            <div className={isFadingIn ? 'fade-in' : ''}> {/* Apply fade-in */}
               {searchResults.map((item: any, index: number) => (
                 <div key={index} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
                   <h3 className="font-semibold text-center">{item.model_name}</h3>
@@ -183,7 +180,7 @@ export default function Chat() {
                       <img
                         src={item.image_url}  // Directly use image_url without any modification
                         alt={item.model_name}
-                        className="adjusted-image"  // Apply a CSS class to handle consistent styling
+                        className="adjusted-image"  // Apply consistent styling
                       />
                     </a>
                   )}
@@ -191,14 +188,14 @@ export default function Chat() {
                     <p className="text-center">Precio: {item.price || "No disponible"}</p>
                   )}
                   <a href={item.referral_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
-                    Ver más detalles
+                    {t.click_for_details} {/* Translated "View more details" */}
                   </a>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center text-gray-500">
-              No results yet. Please wait for the assistant to recommend golf ball models.
+              {t.no_results_message} {/* No results traducido */}
             </div>
           )}
         </div>
@@ -206,32 +203,28 @@ export default function Chat() {
         {/* Styles for tags and fade-in animation */}
         <style jsx>{`
   .fade-in {
-    opacity: 0;
-    animation: fadeIn 3s forwards;
-  }
-
-  .tag {
-    padding: 4px 8px;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-right: 10px;
-  }
-
-  .player-tag {
-    background-color: #B3C186; /* Updated Green color for player */
-    color: white;
-  }
-
-  .assistant-tag {
-    background-color: #60a5fa; /* Blue color for assistant */
-    color: white;
-  }
-
-  .adjusted-image {
-    max-width: 250px;  /* Adjust the max width of the image */
-    max-height: 250px; /* Adjust the max height of the image */
-    object-fit: contain; /* Ensures the image maintains its aspect ratio */
+            opacity: 0;
+            animation: fadeIn 3s forwards;
+          }
+          .tag {
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-right: 10px;
+          }
+          .player-tag {
+            background-color: #B3C186; 
+            color: white;
+          }
+          .assistant-tag {
+            background-color: #60a5fa; 
+            color: white;
+          }
+          .adjusted-image {
+            max-width: 250px;  
+            max-height: 250px; 
+            object-fit: contain; 
   }
 
   @keyframes fadeIn {
@@ -239,7 +232,7 @@ export default function Chat() {
       opacity: 1;
     }
   }
-`}</style>
+`     }</style>
       </div>
     </div>
   );
