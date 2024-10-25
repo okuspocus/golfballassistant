@@ -215,7 +215,7 @@ export default function Chat() {
           }
           .adjusted-image {
             max-width: 300px;  
-            max-height: 300px; 
+            max-height: 400px; 
             object-fit: contain; 
   }
 

@@ -173,9 +173,24 @@ export default function UserForm() {
               onChange={() => setAcceptsPrivacyPolicy(!acceptsPrivacyPolicy)}
             />
             <label className="text-sm text-gray-600">
-              {t.agree_privacy} <a href="/privacy-policy" className="underline text-blue-600">{t.privacy_policy}</a>.
+              {t.agree_privacy}{' '}
+              <a
+                href={
+                  locale === 'es'
+                    ? 'https://bolas.golf/politica-de-privacidad/'
+                    : locale === 'ca'
+                    ? 'https://bolas.golf/ca/politica-de-privacidad/'
+                    : 'https://bolas.golf/en/politica-de-privacidad/' // inglés por defecto
+                }
+                className="underline text-blue-600"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t.privacy_policy}
+              </a>.
             </label>
           </div>
+
           {error && <p className="text-[#b22222] text-md font-semibold mb-4">{error}</p>}
           {message && <p className="text-[#006400] text-lg font-semibold mb-4">{message}</p>}
           
