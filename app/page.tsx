@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Head from 'next/head'; 
+import Head from 'next/head';
 import translations from '../translations/translations';
 
 export default function UserForm() {
@@ -60,14 +60,23 @@ export default function UserForm() {
       const response = await fetch('/api/sendVerification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ 
+          name, 
+          email, 
+          locale,  
+          email_subject: t.email_subject,  // Pass subject from translations
+          email_greeting: t.email_greeting,  // Pass greeting from translations
+          email_body: t.email_body,  // Pass body content from translations
+          success_message: t.email_success,
+          name_email_required: t.name_email_required
+        }),
       });
 
       const data = await response.json();
 
-      setProgress(100); 
+      setProgress(100);
       if (response.ok) {
-        setMessage(data.message);
+        setMessage(t.email_success);  // Using translated success message
         setError("");
       } else {
         setError(data.message || t.error_sending_email);
@@ -173,20 +182,25 @@ export default function UserForm() {
           <button
             type="submit"
             className="w-full py-3 text-black rounded-full shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-green-300 relative overflow-hidden"
-            style={{ backgroundColor: "#5BA862", position: 'relative' }}  // Lighter green color
+            style={{ backgroundColor: "#5BA862", position: 'relative' }}
             disabled={progress > 0 && progress < 100}
           >
             <div
-              className="absolute top-0 left-0 h-full bg-white transition-all duration-300"
-              style={{ width: `${progress}%`, zIndex: 0 }}
+              className="absolute top-0 left-0 h-full transition-all duration-500 ease-linear"
+              style={{
+                width: `${progress}%`,
+                backgroundColor: progress === 100 ? "#5BA862" : "#ffffff",
+              }}
             ></div>
-            <span className="relative z-10">{t.submit_text}</span> {/* Ensure text is on top */}
+            <span className="relative z-10">{t.submit_text}</span>
           </button>
         </form>
       </div>
     </div>
   );
 }
+
+
 
 
 

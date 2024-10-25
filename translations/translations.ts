@@ -21,6 +21,11 @@ export const translations: Record<'en' | 'es' | 'ca', {
   start_placeholder: string;
   click_for_details: string;
   no_results_message: string;
+  email_subject: string;
+  email_greeting: string;
+  email_body: string;
+  email_success: string;
+  name_email_required: string;
 }> = {
   en: {
     meta_title: 'AI Golf Ball Assistant - Find Your Perfect Golf Ball',
@@ -43,12 +48,17 @@ export const translations: Record<'en' | 'es' | 'ca', {
     greeting_message: 'Hi! Lets talk about golf',
     start_placeholder: 'START HERE, say hello to GolfBallAssistant',
     click_for_details: 'Click for details',
-    no_results_message: 'Here your options'
+    no_results_message: 'Here your options',
+    email_subject: 'Verify your email for GolfBallAssistant',
+    email_greeting: 'Hello',
+    email_body: 'Please verify your email by clicking the link below:',
+    email_success: 'Verification email sent. Please check your inbox.',
+    name_email_required: 'Name and email are required',
   },
   es: {
     meta_title: 'Asistente de Pelotas de Golf - Encuentra tu Pelota Perfecta',
     meta_description: 'Usa nuestro asistente de pelotas de golf con IA para encontrar la pelota perfecta para ti.',
-    persuasive_text: 'Hay una bola de golf ideal para cada jugador.',
+    persuasive_text: 'Cada jugador tiene su bola de golf ideal',
     question_text: '¿Sabes cuál es la tuya?',
     enter_details: 'Introduce tus datos',
     enter_name: 'Introduce tu nombre...',
@@ -62,11 +72,16 @@ export const translations: Record<'en' | 'es' | 'ca', {
     error_promos_agree: 'Debes aceptar recibir correos ocasionales.',
     error_privacy_policy_agree: 'Debes aceptar la política de privacidad.',
     error_sending_email: 'Hubo un error al enviar el correo.',
-    submit_text: 'Habla con nuestro asistente con IA',
+    submit_text: 'Hablar con nuestro asistente de IA',
     greeting_message: 'Que tal? Cuéntame cómo es tu juego (golf)',
     start_placeholder: 'COMIENZA AQUÍ, díle algo a GolfBallAssistant',
     click_for_details: 'Ver detalles',
-    no_results_message: 'Opciones disponibles'
+    no_results_message: 'Opciones disponibles',
+    email_subject: 'Verifica tu correo electrónico para GolfBallAssistant',
+    email_greeting: 'Hola',
+    email_body: 'Verifica tu correo electrónico haciendo clic en el enlace a continuación:',
+    email_success: 'Correo de verificación enviado. Por favor revisa tu bandeja de entrada.',
+    name_email_required: 'Se requiere el nombre y el correo electrónico'
   },
   ca: {
     meta_title: 'Assistent de Pilotes de Golf - Troba la Pilota Perfecta',
@@ -89,7 +104,12 @@ export const translations: Record<'en' | 'es' | 'ca', {
     greeting_message: 'Hey! Com anem? Com va el golf?',
     start_placeholder: 'ESCRIU AQUI, digues hola a GolfBallAssistant',
     click_for_details: 'Veure més',
-    no_results_message: 'Opcions disponibles'
+    no_results_message: 'Opcions disponibles',
+    email_subject: 'Verifica el teu correu electrònic per GolfBallAssistant',
+    email_greeting: 'Hola',
+    email_body: 'Verifica el teu correu electrònic fent clic a l\'enllaç següent:',
+    email_success: 'Correu de verificació enviat. Si us plau, comprova la teva safata d\'entrada.',
+    name_email_required: 'Cal el nom i el correu electrònic'
   }
 };
 export default translations;
