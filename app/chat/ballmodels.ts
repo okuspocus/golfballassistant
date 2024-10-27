@@ -33,6 +33,7 @@ export const knownBallModels = [
   "Srixon Soft Feel",
   "Srixon Distance",
   "Titleist AVX",
+  "Titleist DT TruSoft",
   "Titleist Tour Speed",
   "Titleist Tour Soft",
   "Titleist Velocity",

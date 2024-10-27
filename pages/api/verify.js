@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -9,28 +9,26 @@ export default async function handler(req, res) {
     const { token } = req.query;
 
     try {
-      // Verify the JWT token
+      // Verificar el token JWT
       const decoded = jwt.verify(token, JWT_SECRET);
       const { name, email } = decoded;
 
-      // Define the path to the CSV file
+      // Definir la ruta del archivo CSV
       const csvFilePath = path.join(process.cwd(), 'data', 'users.csv');
       const newEntry = `${name},${email}\n`;
 
-      // Append the new entry to the CSV file
-      fs.appendFile(csvFilePath, newEntry, (err) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error saving data' });
-        }
+      // Guardar la entrada en el archivo CSV usando fs.promises.appendFile
+      await fs.appendFile(csvFilePath, newEntry);
 
-        // Set sessionStorage in client-side JavaScript through the redirect URL
-        res.writeHead(302, {
-          Location: `/verified?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`,
-        });
-        res.end();
+      // Redirigir a la página de verificación con los datos en los parámetros de la URL
+      res.writeHead(302, {
+        Location: `/verified?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`,
       });
+      res.end(); // Cerrar la respuesta
     } catch (err) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      console.error('Error:', err.message);
+      // Enviar un error si el token es inválido o si ocurre un problema de escritura en el archivo
+      res.status(400).json({ message: 'Invalid or expired token' });
     }
   } else {
     res.setHeader('Allow', ['GET']);
