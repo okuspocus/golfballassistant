@@ -1,4 +1,3 @@
-// app/chat/page.tsx
 "use client";
 
 import { useChat } from "ai/react";
@@ -19,12 +18,12 @@ export default function Chat() {
   const [hasResults, setHasResults] = useState<boolean>(false);
   const [isFadingIn, setIsFadingIn] = useState(false);
   const [sendReport, setSendReport] = useState(false);
-  const [showModal, setShowModal] = useState(false); // Modal state
-  const [modalMessage, setModalMessage] = useState(""); // Modal message
+  const [showModal, setShowModal] = useState(false); 
+  const [modalMessage, setModalMessage] = useState(""); // Modal message state
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true);  // Loading state for authentication
+  const [loading, setLoading] = useState(true); 
 
   const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
   const [localeLoaded, setLocaleLoaded] = useState(false);
@@ -39,7 +38,6 @@ export default function Chat() {
   const t = translations[locale];
 
   useEffect(() => {
-    // Authentication verification
     const token = sessionStorage.getItem("authToken");
     if (!token) {
       router.push('/');
@@ -50,7 +48,7 @@ export default function Chat() {
         setUserName(storedUserName);
       }
     }
-    setLoading(false); // End loading after verification
+    setLoading(false); 
   }, [router]);
 
   useEffect(() => {
@@ -129,7 +127,7 @@ export default function Chat() {
       await fetch('/api/sendReport', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ email: userEmail, locale }) 
+        body: JSON.stringify({ email: userEmail, locale, userName }) 
       })
       .then(response => response.json())
       .then(() => {
@@ -142,7 +140,7 @@ export default function Chat() {
       });
     } else {
       setShowModal(true);
-      setModalMessage(`${t.farewell_message}`);
+      setModalMessage(t.farewell_message);
     }
   };
 
