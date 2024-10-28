@@ -1,3 +1,4 @@
+// pages/api/verify.js
 import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
 import path from 'path';
@@ -9,25 +10,22 @@ export default async function handler(req, res) {
     const { token } = req.query;
 
     try {
-      // Verificar el token JWT
+      // Verificar token y extraer información de usuario
       const decoded = jwt.verify(token, JWT_SECRET);
       const { name, email } = decoded;
 
-      // Definir la ruta del archivo CSV
+      // Añadir al CSV
       const csvFilePath = path.join(process.cwd(), 'data', 'users.csv');
       const newEntry = `${name},${email}\n`;
-
-      // Guardar la entrada en el archivo CSV usando fs.promises.appendFile
       await fs.appendFile(csvFilePath, newEntry);
 
-      // Redirigir a la página de verificación con los datos en los parámetros de la URL
+      // Redirigir a la página de verificación con el token en la URL
       res.writeHead(302, {
-        Location: `/verified?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`,
+        Location: `/verified?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&token=${token}`,
       });
-      res.end(); // Cerrar la respuesta
+      res.end();
     } catch (err) {
       console.error('Error:', err.message);
-      // Enviar un error si el token es inválido o si ocurre un problema de escritura en el archivo
       res.status(400).json({ message: 'Invalid or expired token' });
     }
   } else {
@@ -35,4 +33,5 @@ export default async function handler(req, res) {
     res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
 }
+
 

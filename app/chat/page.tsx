@@ -1,23 +1,30 @@
-"use client"; // Add this at the top
+// app/chat/page.tsx
+"use client";
 
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
-import { knownBallModels } from "./ballmodels"; // Import from ballmodels.ts
-import translations from '../../translations/translations'; // Import translations
+import { useRouter } from "next/navigation";
+import { knownBallModels } from "./ballmodels";
+import translations from '../../translations/translations';
 
-// Function to extract ball models from assistant's response
 function extractBallModels(responseText: string): string[] {
   return knownBallModels.filter((model) => responseText.includes(model));
 }
 
 export default function Chat() {
+  const router = useRouter();
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat();
   const [searchResults, setSearchResults] = useState<any>(null);
   const [previousBallModels, setPreviousBallModels] = useState<string[]>([]);
   const [hasResults, setHasResults] = useState<boolean>(false);
   const [isFadingIn, setIsFadingIn] = useState(false);
+  const [sendReport, setSendReport] = useState(false);
+  const [showModal, setShowModal] = useState(false); // Modal state
+  const [modalMessage, setModalMessage] = useState(""); // Modal message
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);  // Loading state for authentication
 
   const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
   const [localeLoaded, setLocaleLoaded] = useState(false);
@@ -32,21 +39,31 @@ export default function Chat() {
   const t = translations[locale];
 
   useEffect(() => {
-    const storedUserName = sessionStorage.getItem("userName");
-    if (storedUserName) {
-      setUserName(storedUserName);
+    // Authentication verification
+    const token = sessionStorage.getItem("authToken");
+    if (!token) {
+      router.push('/');
+    } else {
+      setIsAuthenticated(true);
+      const storedUserName = sessionStorage.getItem("userName");
+      if (storedUserName) {
+        setUserName(storedUserName);
+      }
     }
-  }, []);
+    setLoading(false); // End loading after verification
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      scrollToBottom();
+    }
+  }, [messages, isAuthenticated]);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   useEffect(() => {
     if (messages.length === 0 && localeLoaded) {
@@ -96,14 +113,52 @@ export default function Chat() {
             if (combinedResults.length > 0) {
               setSearchResults(combinedResults);
               setHasResults(true);
-              setIsFadingIn(true); // Trigger fade-in effect
-              setTimeout(() => setIsFadingIn(false), 1500); // Reset after animation duration
+              setIsFadingIn(true);
+              setTimeout(() => setIsFadingIn(false), 1500);
             }
           })
           .catch((err) => console.error("Error fetching results:", err));
       }
     }
   }, [messages, previousBallModels]);
+
+  const handleExit = async () => {
+    const userEmail = sessionStorage.getItem("userEmail");
+
+    if (sendReport && userEmail) {
+      await fetch('/api/sendReport', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ email: userEmail, locale }) 
+      })
+      .then(response => response.json())
+      .then(() => {
+        setShowModal(true); 
+        setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
+      })
+      .catch(() => {
+        setShowModal(true);
+        setModalMessage(t.report_error_message);
+      });
+    } else {
+      setShowModal(true);
+      setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    sessionStorage.clear();
+    router.push("/");
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Cargando...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
@@ -162,10 +217,10 @@ export default function Chat() {
           </div>
         </div>
 
-        <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full">
-          {hasResults && searchResults ? (
-            <div className={isFadingIn ? 'fade-in' : ''}>
-              {searchResults.map((item: any, index: number) => (
+        <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full flex flex-col justify-between">
+          <div className={isFadingIn ? 'fade-in' : ''}>
+            {hasResults && searchResults ? (
+              searchResults.map((item: any, index: number) => (
                 <div key={index} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
                   <h3 className="font-semibold text-center">{item.model_name}</h3>
                   {item.image_url && (
@@ -178,20 +233,54 @@ export default function Chat() {
                     </a>
                   )}
                   {item.price && (
-                    <p className="text-center">Precio: {item.price || "No disponible"}</p>
+                    <p className="text-center text-gray-600">Precio: {item.price || "No disponible"}</p>
                   )}
                   <a href={item.referral_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
                     {t.click_for_details}
                   </a>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-gray-500">
-              {t.no_results_message}
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                {t.no_results_message}
+              </div>
+            )}
+          </div>
+
+          {/* Exit and Send Report Section */}
+          <div className="flex flex-col items-center justify-center mt-4 p-2 border-t border-gray-200 bg-[#f5f5f5] rounded-lg shadow-sm">
+            <label className="flex items-center space-x-2 mb-2 text-gray-700">
+              <input
+                type="checkbox"
+                checked={sendReport}
+                onChange={() => setSendReport(!sendReport)}
+                className="h-4 w-4 text-green-600 border-gray-300 rounded"
+              />
+              <span>{t.send_report_option}</span>
+            </label>
+            <button
+              onClick={handleExit}
+              className="bg-[#5BA862] text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-[#4a8a5a] transition duration-200"
+            >
+              {t.exit_button_text}
+            </button>
+          </div>
         </div>
+
+        {/* Confirmation Modal */}
+        {showModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg p-6 shadow-lg text-center">
+              <p className="text-lg font-semibold mb-4">{modalMessage}</p>
+              <button
+                onClick={handleModalClose}
+                className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
 
         <style jsx>{`
           .fade-in {
@@ -217,16 +306,17 @@ export default function Chat() {
             max-width: 300px;  
             max-height: 400px; 
             object-fit: contain; 
-  }
-
-  @keyframes fadeIn {
-    to {
-      opacity: 1;
-    }
-  }
-`     }</style>
+          }
+          @keyframes fadeIn {
+            to {
+              opacity: 1;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
 }
+
+
 

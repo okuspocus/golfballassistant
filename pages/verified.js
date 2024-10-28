@@ -1,20 +1,22 @@
+// pages/verified.js
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 export default function Verified() {
   const router = useRouter();
-  const { name, email } = router.query;
+  const { name, email, token } = router.query;
 
   useEffect(() => {
-    if (name && email) {
-      // Store the user's name and email in sessionStorage
+    if (name && email && token) {
+      // Guardar el token y datos del usuario en sessionStorage
       sessionStorage.setItem('userName', name);
       sessionStorage.setItem('userEmail', email);
+      sessionStorage.setItem('authToken', token); // Nuevo almacenamiento del token
 
-      // Redirect the user to the chat page
+      // Redirigir al chat solo si la verificación es exitosa
       router.push('/chat');
     }
-  }, [name, email, router]);
+  }, [name, email, token, router]);
 
   return (
     <div>
