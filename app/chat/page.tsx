@@ -142,7 +142,7 @@ export default function Chat() {
       });
     } else {
       setShowModal(true);
-      setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
+      setModalMessage(`${t.farewell_message}`);
     }
   };
 
