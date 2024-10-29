@@ -272,18 +272,19 @@ export default function Chat() {
 
         {/* Confirmation Modal */}
         {showModal && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg p-6 shadow-lg text-center">
-              <p className="text-lg font-semibold mb-4">{modalMessage}</p>
-              <button
-                onClick={handleModalClose}
-                className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        )}
+          <div className="modal-overlay">
+             <div className="modal-content">
+              <p className="text-lg font-semibold mb-4">{t.report_sent_message}{t.farewell_message}</p>
+          <button
+            onClick={handleModalClose}
+            className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
+
 
         <style jsx>{`
           .fade-in {
