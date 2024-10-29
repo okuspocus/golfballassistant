@@ -1,14 +1,16 @@
 import OpenAI from 'openai';
 import nodemailer from 'nodemailer';
-import PDFDocument from 'pdfkit';
+import MarkdownIt from 'markdown-it';
+import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
+import translations from '../../translations/translations';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY_DAN,
 });
 
-// Configure nodemailer for email
+// Configuración de nodemailer para el envío de correos
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -20,71 +22,58 @@ const transporter = nodemailer.createTransport({
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ message: `Method ${req.method} not allowed` });
+    return res.status(405).json({ message: translations[req.body.locale]?.report_method_not_allowed || 'Method not allowed' });
   }
 
   const { email, locale, conversation, userName } = req.body;
+  const t = translations[locale] || translations.en;
+  const report_prompt = 'Generate a golf ball recommendations report appealing to the characteristics of the ball models and linking them to those of the user based on the following conversation, in Markdown format, using bullet points and headings where appropriate and adding a profesional style.';
+
   if (!conversation || !Array.isArray(conversation)) {
-    console.error("Invalid or missing conversation data");
-    return res.status(400).json({ message: 'Invalid or missing conversation data' });
+    console.error(t.report_invalid_conversation);
+    return res.status(400).json({ message: t.report_invalid_conversation });
   }
 
   try {
-    // Prepare messages for the chat completion request
+    // Usar prompt traducido para la solicitud de OpenAI
     const messages = [
-      { role: 'system', content: "Generate a golf ball recommendation report based on the following conversation." },
+      { role: 'system', content: t.report_prompt },  // Usar el prompt traducido según el locale
       ...conversation,
     ];
 
-    // Call OpenAI's chat completion endpoint
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages,
       max_tokens: 500,
     });
 
-    const recommendationText = completion.choices[0].message.content.trim();
+    const markdownContent = completion.choices[0].message.content.trim();
 
-    // Generate PDF file using pdfkit
+    const md = new MarkdownIt();
+    const htmlContent = md.render(markdownContent);
+
     const outputFilePath = path.join(process.cwd(), 'recommendation_report.pdf');
-    const doc = new PDFDocument();
-    const writeStream = fs.createWriteStream(outputFilePath);
-    doc.pipe(writeStream);
-
-    // PDF content
-    doc.fontSize(20).text(`Golf Ball Recommendations for ${userName}`, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text('Thanks for visiting our Golf Ball assistant.', {
-      align: 'left',
-    });
-    doc.moveDown();
-
-    // Split recommendations into individual lines
-    const recommendations = recommendationText.split('\n').filter((line) => line.trim());
-    recommendations.forEach((line) => {
-      doc.fontSize(12).text(line.trim(), {
-        align: 'left',
-        indent: 20,
-        lineGap: 4,
-      });
-      doc.moveDown(0.5);
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(`<html><body><h1>${t.report_title} ${userName}</h1><p>${t.report_thanks_message}</p>${htmlContent}</body></html>`);
+    await page.pdf({
+      path: outputFilePath,
+      format: 'A4',
+      margin: {
+        top: '20mm',
+        bottom: '20mm',
+        left: '20mm',
+        right: '20mm'
+      },
     });
 
-    // Finalize PDF file
-    doc.end();
+    await browser.close();
 
-    // Wait until the PDF is fully created
-    await new Promise((resolve, reject) => {
-      writeStream.on('finish', resolve);
-      writeStream.on('error', reject);
-    });
-
-    // Send the email with the PDF report attached
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Your Golf Ball Recommendations Report',
-      text: 'Please find attached your personalized golf ball recommendation report.',
+      subject: t.report_email_subject,
+      text: t.report_email_text,
       attachments: [
         {
           filename: 'recommendation_report.pdf',
@@ -93,15 +82,15 @@ export default async function handler(req, res) {
       ],
     });
 
-    // Delete the PDF after sending the email
     fs.unlinkSync(outputFilePath);
 
-    res.status(200).json({ message: 'Report sent successfully' });
+    res.status(200).json({ message: t.report_success_message });
   } catch (error) {
     console.error('Error generating or sending report:', error);
     res.status(500).json({ message: 'Error generating or sending report' });
   }
 }
+
 
 
 

@@ -37,6 +37,7 @@ export const translations: Record<'en' | 'es' | 'ca', {
   report_method_not_allowed: string;
   report_invalid_conversation: string;
   report_success_message: string;
+  report_prompt: string;
 
  }> = {
   en: {
@@ -71,13 +72,14 @@ export const translations: Record<'en' | 'es' | 'ca', {
     send_report_option: 'I would like a copy of the recommendations sent to my email',
     exit_button_text: 'Exit',
     farewell_message: 'May the birdies be with you!',
-    report_title: 'Golf Ball Recommendations for',
+    report_title: 'Player:',
     report_thanks_message: 'Thanks for visiting GolfBallAssistant. Don\'t forget to share our site with your golf friends!',
     report_email_subject: 'Your Golf Ball Recommendations Report',
     report_email_text: 'We have attached a report summarizing what we discussed at golfballassistant. Come back soon!',
     report_method_not_allowed: 'Method not allowed',
     report_invalid_conversation: 'Invalid or missing conversation data',
     report_success_message: 'Report sent successfully',
+    report_prompt: 'Generate a golf ball recommendations report appealing to the characteristics of the ball models and linking them to those of the user based on the following conversation, in Markdown format, using bullet points and headings where appropriate and adding a profesional style.',
     
   },
   es: {
@@ -112,14 +114,14 @@ export const translations: Record<'en' | 'es' | 'ca', {
     send_report_option: 'Quisiera una copia de lo recomendado en mi correo',
     exit_button_text: 'Salir',
     farewell_message: '¡Que los birdies te acompañen!',
-    report_title: 'Recomendaciones de Pelotas de Golf para',
+    report_title: 'Jugador:',
     report_thanks_message: 'Gracias por visitar GolfBallAssistant. No olvides compartir nuestro site con tus amigos del golf!',
     report_email_subject: 'Su Informe de Recomendaciones de Pelotas de Golf',
     report_email_text: 'Hemos adjuntado un informe que sintetiza lo que hemos hablado en el golfballassistant. ¡Gracias por tu confianza!',
     report_method_not_allowed: 'Método no permitido',
     report_invalid_conversation: 'Datos de conversación inválidos o ausentes',
     report_success_message: 'Informe enviado exitosamente',
-   
+    report_prompt: 'Generar un informe de recomendaciones de bolas de golf apelando a las características de los modelos de pelota y vinculándolas con las del usuario en base a la siguiente conversación, en formato Markdown, utilizando viñetas y encabezados cuando sea apropiado y agregando un estilo profesional.'
   },
   ca: {
     meta_title: 'Assistent de Pilotes de Golf - Troba la Pilota Perfecta',
@@ -153,14 +155,14 @@ export const translations: Record<'en' | 'es' | 'ca', {
     send_report_option: 'Voldria rebre les recomanacions al meu correu',
     exit_button_text: 'Sortir',
     farewell_message: 'Que els birdies t\'acompanyin!',
-    report_title: 'Recomanacions de boles de Golf per a',
+    report_title: 'Jugador:',
     report_thanks_message: 'Gràcies per visitar GolfBallAssistant. No oblidis compartir el nostre site amb els teus amics del golf!',
     report_email_subject: 'El teu informe de recomanacions',
     report_email_text: 'Hem adjuntat un informe que sintetitza el que hem parlat al golfballassistant. Gràcies per la teva confiança!',
     report_method_not_allowed: 'Mètode no permès',
     report_invalid_conversation: 'Dades de conversa invàlides o inexistents',
     report_success_message: 'Informe enviat amb èxit',
-    
+    report_prompt: 'Generar un informe de recomanacions de boles de golf que atracti les característiques dels models de pilota i enllaçant-los amb les de l\'usuari a partir de la següent conversa, en format Markdown, utilitzant vinyetes i encapçalaments si escau i afegint un estil professional.',
   }
 };
 export default translations;
