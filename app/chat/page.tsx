@@ -19,7 +19,8 @@ export default function Chat() {
   const [isFadingIn, setIsFadingIn] = useState(false);
   const [sendReport, setSendReport] = useState(false);
   const [showModal, setShowModal] = useState(false); 
-  const [modalMessage, setModalMessage] = useState(""); // Modal message state
+  const [modalMessage, setModalMessage] = useState(""); 
+  const [showOkButton, setShowOkButton] = useState(false); // Estado para controlar la visibilidad del botón OK
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -123,11 +124,16 @@ export default function Chat() {
   const handleExit = async () => {
     const userEmail = sessionStorage.getItem("userEmail");
     const userName = sessionStorage.getItem("userName");
-  
+
     // Capture the conversation messages
     const conversation = messages.map(msg => ({ role: msg.role, content: msg.content }));
-  
+
     if (sendReport && userEmail) {
+      setModalMessage(t.report_generating);
+      setShowModal(true); 
+      setShowOkButton(false);
+
+      // Verificar que la conversación se está enviando correctamente
       await fetch('/api/sendReport', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
@@ -136,7 +142,6 @@ export default function Chat() {
       .then(async response => {
         const data = await response.json();
         if (!response.ok) {
-          // Check for specific error types to customize messages
           let errorMessage = '';
           switch (data.errorType) {
             case 'invalidReport':
@@ -147,25 +152,24 @@ export default function Chat() {
               errorMessage = t.report_send_failure_message;
               break;
           }
-          setShowModal(true);
           setModalMessage(errorMessage);
         } else {
-          setShowModal(true);
           setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
         }
+        setShowOkButton(true);
       })
       .catch(() => {
-        setShowModal(true);
         setModalMessage(t.report_error_message);
+        setShowOkButton(true);
       });
     } else {
       setShowModal(true);
       setModalMessage(`${t.farewell_message}`);
+      setShowOkButton(true);
     }
-  };
-  
-    
+};
 
+  
   const handleModalClose = () => {
     setShowModal(false);
     sessionStorage.clear();
@@ -291,17 +295,18 @@ export default function Chat() {
         {showModal && (
           <div className="modal-overlay">
              <div className="modal-content">
-              <p className="text-lg font-semibold mb-4">{t.report_sent_message}{t.farewell_message}</p>
-          <button
-            onClick={handleModalClose}
-            className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
-      >
-        OK
-      </button>
-    </div>
-  </div>
-)}
-
+              <p className="text-lg font-semibold mb-4">{modalMessage}</p>
+              {showOkButton && (
+                <button
+                  onClick={handleModalClose}
+                  className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <style jsx>{`
           .fade-in {
@@ -327,6 +332,26 @@ export default function Chat() {
             max-width: 300px;  
             max-height: 400px; 
             object-fit: contain; 
+          }
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+          }
+          .modal-content {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
           }
           @keyframes fadeIn {
             to {

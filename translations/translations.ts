@@ -40,7 +40,10 @@ export const translations: Record<'en' | 'es' | 'ca', {
   report_prompt: string;
   report_invalid_content_message: string;
   report_send_failure_message: string;
+  report_generating:string;
+  report_default_modal_message: string;
  }> = {
+
   en: {
     meta_title: 'AI Golf Ball Assistant - Find Your Perfect Golf Ball',
     meta_description: 'Use our AI-powered golf ball assistant to find the perfect golf ball for you.',
@@ -83,6 +86,8 @@ export const translations: Record<'en' | 'es' | 'ca', {
     report_prompt: 'Generate a golf ball model recommendations report based on the following conversation and appealing to the characteristics of the ball models and linking them to those of the user, in Markdown format, using bullet points and headings where appropriate and adding a profesional style.',
     report_invalid_content_message: 'The generated report is invalid. Please try again later.',
     report_send_failure_message: 'There was a problem generating or sending the report. Please try again.',
+    report_generating: 'The report is being generated...',
+    report_default_modal_message: 'Processing your request...',
   },
   es: {
     meta_title: 'Asistente de Pelotas de Golf - Encuentra tu Pelota Perfecta',
@@ -126,6 +131,9 @@ export const translations: Record<'en' | 'es' | 'ca', {
     report_prompt: 'Generar un informe de recomendaciones de modelos de pelotas de golf basado en la siguiente conversación y apelando a las características de los modelos de pelota y vinculándolas con las del usuario, en formato Markdown, utilizando viñetas y encabezados cuando sea apropiado y agregando un estilo profesional.',
     report_invalid_content_message: 'El informe generado no es válido. Inténtelo nuevamente más tarde',
     report_send_failure_message: 'Hubo un problema al generar o enviar el informe. Inténtelo nuevamente',
+    report_generating: 'El informe se está generando...',
+    report_default_modal_message: 'Procesando tu solicitud...',
+
   },
   ca: {
     meta_title: 'Assistent de Pilotes de Golf - Troba la Pilota Perfecta',
@@ -169,6 +177,8 @@ export const translations: Record<'en' | 'es' | 'ca', {
     report_prompt: 'Generar un informe de recomanacions de models de bola de golf a partir de la conversa següent i apel·lant a les característiques dels models de bola i vinculant-los a les de l\'usuari, en format Markdown, utilitzant vinyetes i encapçalaments si escau i afegint un estil professional.',
     report_invalid_content_message: 'L\'informe generat no és vàlid. Intenteu-ho novament més tard',
     report_send_failure_message: 'Hi ha hagut un problema en generar o enviar l\'informe. Intenteu-ho novament',
+    report_generating:'L\'informe s\'està generant...',
+    report_default_modal_message: 'Processant la teva sol·licitud...',
   }
 };
 export default translations;

@@ -10,7 +10,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY_DAN,
 });
 
-// Configuración de nodemailer para el envío de correos
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -27,16 +26,15 @@ export default async function handler(req, res) {
 
   const { email, locale, conversation, userName } = req.body;
   const t = translations[locale] || translations.en;
-  
-  if (!conversation || !Array.isArray(conversation)) {
-    console.error(t.report_invalid_conversation);
+
+  if (!conversation || !Array.isArray(conversation) || conversation.length === 0) {
+    console.error("Conversation data is missing or invalid.");
     return res.status(400).json({ message: t.report_invalid_conversation });
   }
 
   try {
-    // Usar prompt traducido para la solicitud de OpenAI
     const messages = [
-      { role: 'system', content: t.report_prompt },  // Usar el prompt traducido según el locale
+      { role: 'system', content: t.report_prompt },
       ...conversation,
     ];
 
