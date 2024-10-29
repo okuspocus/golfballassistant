@@ -23,6 +23,7 @@ export const knownBallModels = [
   "Vice Pro Soft",
   "Titleist Pro V1x",
   "Srixon Q-Star Tour",
+  "Srixon Q-Star",
   "Kirkland Signature Golf Ball",
   "TaylorMade TP5x",
   "TaylorMade TP5 Pix",

@@ -1,40 +1,51 @@
 # generate_pdf.py
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 import sys
 import json
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 
-def create_pdf(data, file_path):
-    c = canvas.Canvas(file_path, pagesize=A4)
-    width, height = A4
+def create_pdf(data, output_path):
+    c = canvas.Canvas(output_path, pagesize=letter)
+    width, height = letter
 
-    # Título
-    c.setFont("Helvetica-Bold", 20)
-    c.drawString(72, height - 80, "Informe de Recomendación de Bolas de Golf")
+    # Configuración inicial
+    c.setFont("Helvetica-Bold", 16)
+    y = height - inch  # Margen superior de 1 pulgada
 
-    # Subtítulo
+    # Título del informe
+    c.drawString(72, y, f"Golf Ball Recommendations for {data['user_name']}")
+    y -= 0.5 * inch
+
+    # Subtítulo y ajustes de fuente
     c.setFont("Helvetica", 12)
-    c.drawString(72, height - 120, f"Nombre del usuario: {data.get('user_name', 'Usuario desconocido')}")
-
-    # Lista de recomendaciones
-    y = height - 160
-    for recommendation in data.get('recommendations', []):
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(72, y, f"Modelo: {recommendation.get('model_name')}")
-        y -= 20
-        c.setFont("Helvetica", 10)
-        c.drawString(72, y, f"Precio: {recommendation.get('price', 'No disponible')}")
-        y -= 20
-        y -= 20  # Espacio extra entre items
-
-        if y < 72:
+    c.setFillColor(colors.black)
+    
+    # Procesar cada modelo y razón
+    for model, reason in data['recommendations'].items():
+        if y < inch:  # Salto de página si el contenido llega al borde inferior
             c.showPage()
-            y = height - 80
+            c.setFont("Helvetica", 12)
+            y = height - inch
+        
+        c.drawString(72, y, f"Model: {model}")
+        y -= 20
+        text = c.beginText(72, y)
+        text.setFont("Helvetica", 10)
+        text.setLeading(14)
+        
+        # Ajuste de línea para la razón del modelo
+        for line in reason.splitlines():
+            text.textLine(f"Reason: {line}")
+            y -= 14
+        
+        c.drawText(text)
+        y -= 20  # Espacio entre modelos
 
     c.save()
 
 if __name__ == "__main__":
-    data = json.loads(sys.argv[1])  # Datos JSON
-    output_path = sys.argv[2]       # Ruta del PDF de salida
-    create_pdf(data, output_path)
-
+    json_data = json.loads(sys.argv[1])
+    output_pdf_path = sys.argv[2]
+    create_pdf(json_data, output_pdf_path)

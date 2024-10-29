@@ -122,12 +122,16 @@ export default function Chat() {
 
   const handleExit = async () => {
     const userEmail = sessionStorage.getItem("userEmail");
-
+    const userName = sessionStorage.getItem("userName");
+    
+    // Capture the conversation messages
+    const conversation = messages.map(msg => ({ role: msg.role, content: msg.content }));
+  
     if (sendReport && userEmail) {
       await fetch('/api/sendReport', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ email: userEmail, locale, userName }) 
+        body: JSON.stringify({ email: userEmail, locale, conversation, userName }) 
       })
       .then(response => response.json())
       .then(() => {
@@ -140,9 +144,10 @@ export default function Chat() {
       });
     } else {
       setShowModal(true);
-      setModalMessage(t.farewell_message);
+      setModalMessage(`${t.farewell_message}`);
     }
   };
+  
 
   const handleModalClose = () => {
     setShowModal(false);

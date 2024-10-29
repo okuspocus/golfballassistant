@@ -1,10 +1,14 @@
-// sendReport.js
+import OpenAI from 'openai';
 import nodemailer from 'nodemailer';
-import path from 'path';
-import { execFile } from 'child_process';
+import PDFDocument from 'pdfkit';
 import fs from 'fs';
+import path from 'path';
 
-// Configuración del transporter de nodemailer
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY_DAN,
+});
+
+// Configure nodemailer for email
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -14,56 +18,90 @@ const transporter = nodemailer.createTransport({
 });
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    const { email, locale, recommendations, userName } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
-    }
-
-    const pdfPath = path.join(process.cwd(), 'recommendation_report.pdf');
-    const jsonData = JSON.stringify({ user_name: userName, recommendations });
-
-    try {
-      // Genera el PDF con `generate_pdf.py`
-      await new Promise((resolve, reject) => {
-        execFile('python3', [path.join(process.cwd(), 'generate_pdf.py'), jsonData, pdfPath], (error, stdout, stderr) => {
-          if (error) {
-            console.error('Error generating PDF:', stderr);
-            reject(error);
-          } else {
-            resolve(stdout);
-          }
-        });
-      });
-
-      // Enviar el correo electrónico con el PDF adjunto
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: locale === 'es' ? 'Informe de recomendaciones de golf' : locale === 'ca' ? 'Informe de recomanacions de golf' : 'Golf Recommendations Report',
-        text: locale === 'es' ? 'Adjuntamos su informe de recomendaciones de golf. Una última cosa, si te ha sido útil la aplicación,  nos puedes contestar este correo con aquello que te gustaría que mejoráramos?' : locale === 'ca' ? 'Adjunt adjuntem l\'informe de recomanacions de golf. Una darrera cosa, ens seria molt útil si ens pots contestar aquest correu amb allò que voldries que milloréssim. Gràcies!' : 'Attached is your golf recommendation report. One last thing, if the application has been useful to you, can you reply to this email with what you would like us to improve?',
-        attachments: [
-          {
-            filename: 'recommendation_report.pdf',
-            path: pdfPath,
-          },
-        ],
-      });
-
-      console.log('Report email sent successfully');
-      res.status(200).json({ message: 'Report sent successfully.' });
-
-    } catch (err) {
-      console.error('Error sending report email:', err);
-      res.status(500).json({ message: 'Error sending report email.' });
-    } finally {
-      if (fs.existsSync(pdfPath)) {
-        fs.unlinkSync(pdfPath);
-      }
-    }
-  } else {
+  if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    res.status(405).json({ message: `Method ${req.method} not allowed` });
+    return res.status(405).json({ message: `Method ${req.method} not allowed` });
+  }
+
+  const { email, locale, conversation, userName } = req.body;
+  if (!conversation || !Array.isArray(conversation)) {
+    console.error("Invalid or missing conversation data");
+    return res.status(400).json({ message: 'Invalid or missing conversation data' });
+  }
+
+  try {
+    // Prepare messages for the chat completion request
+    const messages = [
+      { role: 'system', content: "Generate a golf ball recommendation report based on the following conversation." },
+      ...conversation,
+    ];
+
+    // Call OpenAI's chat completion endpoint
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages,
+      max_tokens: 500,
+    });
+
+    const recommendationText = completion.choices[0].message.content.trim();
+
+    // Generate PDF file using pdfkit
+    const outputFilePath = path.join(process.cwd(), 'recommendation_report.pdf');
+    const doc = new PDFDocument();
+    const writeStream = fs.createWriteStream(outputFilePath);
+    doc.pipe(writeStream);
+
+    // PDF content
+    doc.fontSize(20).text(`Golf Ball Recommendations for ${userName}`, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text('Thanks for visiting our Golf Ball assistant.', {
+      align: 'left',
+    });
+    doc.moveDown();
+
+    // Split recommendations into individual lines
+    const recommendations = recommendationText.split('\n').filter((line) => line.trim());
+    recommendations.forEach((line) => {
+      doc.fontSize(12).text(line.trim(), {
+        align: 'left',
+        indent: 20,
+        lineGap: 4,
+      });
+      doc.moveDown(0.5);
+    });
+
+    // Finalize PDF file
+    doc.end();
+
+    // Wait until the PDF is fully created
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
+
+    // Send the email with the PDF report attached
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Your Golf Ball Recommendations Report',
+      text: 'Please find attached your personalized golf ball recommendation report.',
+      attachments: [
+        {
+          filename: 'recommendation_report.pdf',
+          path: outputFilePath,
+        },
+      ],
+    });
+
+    // Delete the PDF after sending the email
+    fs.unlinkSync(outputFilePath);
+
+    res.status(200).json({ message: 'Report sent successfully' });
+  } catch (error) {
+    console.error('Error generating or sending report:', error);
+    res.status(500).json({ message: 'Error generating or sending report' });
   }
 }
+
+
+
