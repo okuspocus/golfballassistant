@@ -123,7 +123,7 @@ export default function Chat() {
   const handleExit = async () => {
     const userEmail = sessionStorage.getItem("userEmail");
     const userName = sessionStorage.getItem("userName");
-    
+  
     // Capture the conversation messages
     const conversation = messages.map(msg => ({ role: msg.role, content: msg.content }));
   
@@ -133,10 +133,26 @@ export default function Chat() {
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ email: userEmail, locale, conversation, userName }) 
       })
-      .then(response => response.json())
-      .then(() => {
-        setShowModal(true); 
-        setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) {
+          // Check for specific error types to customize messages
+          let errorMessage = '';
+          switch (data.errorType) {
+            case 'invalidReport':
+              errorMessage = t.report_invalid_content_message;
+              break;
+            case 'sendReportFailure':
+            default:
+              errorMessage = t.report_send_failure_message;
+              break;
+          }
+          setShowModal(true);
+          setModalMessage(errorMessage);
+        } else {
+          setShowModal(true);
+          setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
+        }
       })
       .catch(() => {
         setShowModal(true);
@@ -148,6 +164,7 @@ export default function Chat() {
     }
   };
   
+    
 
   const handleModalClose = () => {
     setShowModal(false);

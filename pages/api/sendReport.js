@@ -27,8 +27,7 @@ export default async function handler(req, res) {
 
   const { email, locale, conversation, userName } = req.body;
   const t = translations[locale] || translations.en;
-  const report_prompt = 'Generate a golf ball recommendations report appealing to the characteristics of the ball models and linking them to those of the user based on the following conversation, in Markdown format, using bullet points and headings where appropriate and adding a profesional style.';
-
+  
   if (!conversation || !Array.isArray(conversation)) {
     console.error(t.report_invalid_conversation);
     return res.status(400).json({ message: t.report_invalid_conversation });
