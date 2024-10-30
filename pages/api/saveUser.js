@@ -1,4 +1,4 @@
-// pages/api/saveUser.js (o similar)
+// pages/api/saveUser.js 
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -16,22 +16,35 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
 
-  const { name, email } = req.body;
+  try {
+    const { name, email } = req.body;
 
-  // Cifrar la información
-  const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
-  let encrypted = cipher.update(`${name},${email}`);
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-  
-  // Guardar en formato IV:encryptedText
-  const encryptedData = `${iv.toString('hex')}:${encrypted.toString('hex')}\n`;
-  
-  fs.appendFile(csvFilePath, encryptedData, (err) => {
-    if (err) {
-      console.error('Error al guardar los datos:', err);
-      return res.status(500).json({ message: 'Error al guardar los datos' });
+    // Verificación de datos de entrada
+    if (!name || !email) {
+      return res.status(400).json({ message: 'Name and email are required' });
     }
-    return res.status(200).json({ message: 'Datos guardados exitosamente' });
-  });
+
+    // Cifrar la información
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+    let encrypted = cipher.update(`${name},${email}`);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    
+    // Guardar en formato IV:encryptedText
+    const encryptedData = `${iv.toString('hex')}:${encrypted.toString('hex')}\n`;
+    
+    // Escribir en el archivo y enviar la respuesta
+    fs.appendFile(csvFilePath, encryptedData, (err) => {
+      if (err) {
+        console.error('Error al guardar los datos:', err);
+        return res.status(500).json({ message: 'Error al guardar los datos' });
+      }
+      // Respuesta exitosa
+      return res.status(200).json({ message: 'Datos guardados exitosamente' });
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).json({ message: 'Unexpected error occurred' });
+  }
 }
+

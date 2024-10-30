@@ -131,3 +131,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+#venv newvenv
+.venv
+.newvenv
+
+#data directory
+.data
