@@ -1,7 +1,5 @@
 // pages/api/verify.js
 import jwt from 'jsonwebtoken';
-import fs from 'fs/promises';
-import path from 'path';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -13,11 +11,6 @@ export default async function handler(req, res) {
       // Verificar token y extraer información de usuario
       const decoded = jwt.verify(token, JWT_SECRET);
       const { name, email } = decoded;
-
-      // Añadir al CSV
-      const csvFilePath = path.join(process.cwd(), 'data', 'users.csv');
-      const newEntry = `${name},${email}\n`;
-      await fs.appendFile(csvFilePath, newEntry);
 
       // Redirigir a la página de verificación con el token en la URL
       res.writeHead(302, {
@@ -33,5 +26,3 @@ export default async function handler(req, res) {
     res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
 }
-
-

@@ -124,50 +124,51 @@ export default function Chat() {
   const handleExit = async () => {
     const userEmail = sessionStorage.getItem("userEmail");
     const userName = sessionStorage.getItem("userName");
-
-    // Capture the conversation messages
+  
+    // Capturar los mensajes de la conversación
     const conversation = messages.map(msg => ({ role: msg.role, content: msg.content }));
-
+  
     if (sendReport && userEmail) {
       setModalMessage(t.report_generating);
-      setShowModal(true); 
+      setShowModal(true);
       setShowOkButton(false);
-
-      // Verificar que la conversación se está enviando correctamente
-      await fetch('/api/sendReport', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ email: userEmail, locale, conversation, userName }) 
-      })
-      .then(async response => {
-        const data = await response.json();
-        if (!response.ok) {
-          let errorMessage = '';
-          switch (data.errorType) {
-            case 'invalidReport':
-              errorMessage = t.report_invalid_content_message;
-              break;
-            case 'sendReportFailure':
-            default:
-              errorMessage = t.report_send_failure_message;
-              break;
-          }
+  
+      try {
+        // Enviar informe
+        const reportResponse = await fetch('/api/sendReport', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ email: userEmail, locale, conversation, userName }) 
+        });
+        const reportData = await reportResponse.json();
+        if (!reportResponse.ok) {
+          const errorMessage = reportData.errorType === 'invalidReport' ? 
+            t.report_invalid_content_message : t.report_send_failure_message;
           setModalMessage(errorMessage);
         } else {
           setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
         }
-        setShowOkButton(true);
-      })
-      .catch(() => {
+      } catch {
         setModalMessage(t.report_error_message);
-        setShowOkButton(true);
+      }
+  
+      // Guardar datos en el CSV al final de la interacción
+      await fetch('/api/saveUser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: userName, email: userEmail })
       });
+  
+      setShowOkButton(true);
     } else {
       setShowModal(true);
       setModalMessage(`${t.farewell_message}`);
       setShowOkButton(true);
     }
-};
+  };
+  
+  
+  
 
   
   const handleModalClose = () => {
