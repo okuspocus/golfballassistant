@@ -152,23 +152,26 @@ export default function Chat() {
         setModalMessage(t.report_error_message);
       }
   
-      // Guardar datos en el CSV al final de la interacción
-      await fetch('/api/saveUser', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: userName, email: userEmail })
-      });
-  
       setShowOkButton(true);
     } else {
       setShowModal(true);
       setModalMessage(`${t.farewell_message}`);
       setShowOkButton(true);
     }
+  
+    // Guardar los datos en el CSV al final de la interacción
+    if (userEmail && userName) {
+      try {
+        await fetch('/api/saveUser', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: userName, email: userEmail })
+        });
+      } catch (error) {
+        console.error("Error saving user data:", error);
+      }
+    }
   };
-  
-  
-  
 
   
   const handleModalClose = () => {

@@ -8,9 +8,16 @@ export default async function handler(req, res) {
     const { token } = req.query;
 
     try {
-      // Verificar token y extraer información de usuario
+      // Verificar el token y extraer la información del usuario
       const decoded = jwt.verify(token, JWT_SECRET);
       const { name, email } = decoded;
+
+      // Guardar los datos en el archivo CSV llamando a /api/saveUser
+      await fetch(`${process.env.FRONTEND_URL}/api/saveUser`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email })
+      });
 
       // Redirigir a la página de verificación con el token en la URL
       res.writeHead(302, {
@@ -26,3 +33,4 @@ export default async function handler(req, res) {
     res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
 }
+
