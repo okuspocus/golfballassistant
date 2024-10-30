@@ -1,37 +1,37 @@
-import jwt from 'jsonwebtoken';
+// pages/api/saveUser.js (o similar)
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const ALGORITHM = 'aes-256-cbc';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+const IV_LENGTH = 16;
+
+// Ruta del archivo CSV
+const csvFilePath = path.join(process.cwd(), 'data', 'users.csv');
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    const { token } = req.query;
-
-    try {
-      // Verify the token
-      const decoded = jwt.verify(token, JWT_SECRET);
-
-      const { name, email } = decoded;
-
-      // Define the path to the CSV file
-      const csvFilePath = path.join(process.cwd(), 'data', 'users.csv');
-      const newEntry = `${name},${email}\n`;
-
-      // Append the new entry to the CSV file
-      fs.appendFile(csvFilePath, newEntry, (err) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error saving data' });
-        }
-
-        // Send a success response after saving data
-        return res.status(200).json({ message: 'Email verified and data saved successfully' });
-      });
-    } catch (err) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
-    }
-  } else {
-    res.setHeader('Allow', ['GET']);
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).json({ message: `Method ${req.method} not allowed` });
   }
+
+  const { name, email } = req.body;
+
+  // Cifrar la información
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+  let encrypted = cipher.update(`${name},${email}`);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  
+  // Guardar en formato IV:encryptedText
+  const encryptedData = `${iv.toString('hex')}:${encrypted.toString('hex')}\n`;
+  
+  fs.appendFile(csvFilePath, encryptedData, (err) => {
+    if (err) {
+      console.error('Error al guardar los datos:', err);
+      return res.status(500).json({ message: 'Error al guardar los datos' });
+    }
+    return res.status(200).json({ message: 'Datos guardados exitosamente' });
+  });
 }

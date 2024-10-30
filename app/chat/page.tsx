@@ -1,110 +1,199 @@
-"use client"; // Add this at the top
+"use client";
 
 import { useChat } from "ai/react";
 import { useEffect, useRef, useState } from "react";
-import { knownBallModels } from "./ballmodels";  // Importar desde ballmodels.ts
+import { useRouter } from "next/navigation";
+import { knownBallModels } from "./ballmodels";
+import translations from '../../translations/translations';
 
-// Función para extraer los modelos de bolas del texto del asistente
 function extractBallModels(responseText: string): string[] {
   return knownBallModels.filter((model) => responseText.includes(model));
 }
 
 export default function Chat() {
+  const router = useRouter();
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat();
   const [searchResults, setSearchResults] = useState<any>(null);
   const [previousBallModels, setPreviousBallModels] = useState<string[]>([]);
   const [hasResults, setHasResults] = useState<boolean>(false);
   const [isFadingIn, setIsFadingIn] = useState(false);
+  const [sendReport, setSendReport] = useState(false);
+  const [showModal, setShowModal] = useState(false); 
+  const [modalMessage, setModalMessage] = useState(""); 
+  const [showOkButton, setShowOkButton] = useState(false); // Estado para controlar la visibilidad del botón OK
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [userName, setUserName] = useState<string | null>(null); // State to hold the user's name
+  const [userName, setUserName] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true); 
 
-  // Get the user's name from sessionStorage
+  const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
+  const [localeLoaded, setLocaleLoaded] = useState(false);
+
   useEffect(() => {
-    const storedUserName = sessionStorage.getItem("userName");
-    if (storedUserName) {
-      setUserName(storedUserName);
-    }
+    const userLocale = navigator.language || 'en';
+    const detectedLocale = userLocale.startsWith('es') ? 'es' : userLocale.startsWith('ca') ? 'ca' : 'en';
+    setLocale(detectedLocale as 'en' | 'es' | 'ca');
+    setLocaleLoaded(true);
   }, []);
 
-  // Auto-scroll: función para desplazarse al final del contenedor de mensajes
+  const t = translations[locale];
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("authToken");
+    if (!token) {
+      router.push('/');
+    } else {
+      setIsAuthenticated(true);
+      const storedUserName = sessionStorage.getItem("userName");
+      if (storedUserName) {
+        setUserName(storedUserName);
+      }
+    }
+    setLoading(false); 
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      scrollToBottom();
+    }
+  }, [messages, isAuthenticated]);
+
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   };
 
-  // Scroll automático cada vez que cambian los mensajes
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Initialize with a greeting message
-  useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && localeLoaded) {
       setMessages([
         {
           id: 'welcome',
           role: 'assistant',
-          content: `Let's find the best golf ball for you and feel free to use linked related results on the right side!`
+          content: t.greeting_message
         }
       ]);
     }
-  }, []); 
+  }, [localeLoaded, locale, setMessages, messages.length, t.greeting_message]);
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-
     if (lastMessage && lastMessage.role === "assistant") {
       const ballModels = extractBallModels(lastMessage.content);
-
-      // Only trigger a new search if the ball models are new or different from previousBallModels
-      if (ballModels.length >= 2 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
+      if (ballModels.length > 0 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
         setPreviousBallModels(ballModels);
-        const [firstModel, secondModel] = ballModels.slice(0, 2);
-
-        // Trigger the search for the new ball models
-        Promise.all([
+        const fetchPromises = [
           fetch('http://127.0.0.1:5000/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keywords: firstModel })
+            body: JSON.stringify({ keywords: ballModels[0] })
           }),
-          fetch('http://127.0.0.1:5000/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keywords: secondModel })
-          })
-        ])
+        ];
+
+        if (ballModels.length > 1) {
+          fetchPromises.push(
+            fetch('http://127.0.0.1:5000/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ keywords: ballModels[1] })
+            })
+          );
+        }
+
+        Promise.all(fetchPromises)
           .then(async ([response1, response2]) => {
             const data1 = response1.ok ? await response1.json() : null;
-            const data2 = response2.ok ? await response2.json() : null;
+            const data2 = response2?.ok ? await response2.json() : null;
 
-            // Check if both responses are valid before setting results
-            if (data1 && data2) {
-              const combinedResults = { results1: data1, results2: data2 };
-              console.log('Combined Results:', combinedResults);
+            const combinedResults = [];
+            if (data1) combinedResults.push(...data1);
+            if (data2) combinedResults.push(...data2);
+
+            if (combinedResults.length > 0) {
               setSearchResults(combinedResults);
-              setHasResults(true); // Mark that we have valid results
-
-              // Trigger fade-in once the new data is available
+              setHasResults(true);
               setIsFadingIn(true);
-              setTimeout(() => setIsFadingIn(false), 3000); // Remove fade-in effect after 3 seconds
+              setTimeout(() => setIsFadingIn(false), 1500);
             }
           })
-          .catch(err => {
-            console.error('Error fetching results:', err);
-            setHasResults(false);  // Mark that no valid results are available
-          });
+          .catch((err) => console.error("Error fetching results:", err));
       }
     }
-  }, [messages, previousBallModels, hasResults]);
+  }, [messages, previousBallModels]);
+
+  const handleExit = async () => {
+    const userEmail = sessionStorage.getItem("userEmail");
+    const userName = sessionStorage.getItem("userName");
+  
+    // Capturar los mensajes de la conversación
+    const conversation = messages.map(msg => ({ role: msg.role, content: msg.content }));
+  
+    if (sendReport && userEmail) {
+      setModalMessage(t.report_generating);
+      setShowModal(true);
+      setShowOkButton(false);
+  
+      try {
+        // Enviar informe
+        const reportResponse = await fetch('/api/sendReport', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ email: userEmail, locale, conversation, userName }) 
+        });
+        const reportData = await reportResponse.json();
+        if (!reportResponse.ok) {
+          const errorMessage = reportData.errorType === 'invalidReport' ? 
+            t.report_invalid_content_message : t.report_send_failure_message;
+          setModalMessage(errorMessage);
+        } else {
+          setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
+        }
+      } catch {
+        setModalMessage(t.report_error_message);
+      }
+  
+      setShowOkButton(true);
+    } else {
+      setShowModal(true);
+      setModalMessage(`${t.farewell_message}`);
+      setShowOkButton(true);
+    }
+  
+    // Guardar los datos en el CSV al final de la interacción
+    if (userEmail && userName) {
+      try {
+        await fetch('/api/saveUser', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: userName, email: userEmail })
+        });
+      } catch (error) {
+        console.error("Error saving user data:", error);
+      }
+    }
+  };
+
+  
+  const handleModalClose = () => {
+    setShowModal(false);
+    sessionStorage.clear();
+    router.push("/");
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Cargando...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
-      <header className="bg-white w-full py-8 fixed top-0 z-10 border-b border-gray-200">
+      <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
         <div className="text-center">
           <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
-            golfballassistant
+            GolfBallAssistant
           </h1>
           <p className="text-lg font-bold text-gray-700 mt-2">
             Golf balls look the same. They are not.
@@ -113,15 +202,13 @@ export default function Chat() {
       </header>
 
       <div className="flex flex-row w-full h-full mt-24 mx-auto overflow-hidden">
-        {/* Conversación con la imagen de fondo */}
         <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300 relative">
-          {/* Imagen de fondo */}
           <div 
             className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50" 
             style={{ 
               backgroundImage: 'url("/golf-ball.jpg")',
               pointerEvents: 'none',
-              filter: 'blur(8px)'  // Aplica desenfoque
+              filter: 'blur(8px)'
             }} 
           ></div>
 
@@ -146,78 +233,90 @@ export default function Chat() {
             )}
           </div>
 
-          {/* Caja de texto destacada */}
           <div className="bg-white shadow-lg p-4 border-t border-gray-300">
             <form onSubmit={handleSubmit} className="mb-4">
               <input
                 className="w-full p-4 mb-2 border-4 border-blue-400 rounded-lg shadow-lg bg-white focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-400 text-black text-lg transition-all duration-300 ease-in-out transform hover:scale-102"
                 value={input}
-                placeholder="START HERE say hello to our AI-Powered golf assistant..."
+                placeholder={t.start_placeholder} 
                 onChange={handleInputChange}
               />
             </form>
           </div>
         </div>
 
-        {/* Resultados de búsqueda en el lado derecho */}
-        <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full">
-          {hasResults && searchResults ? (  // Only show results if there are valid ones and after fade-in
-            <div className={isFadingIn ? 'fade-in' : ''}> {/* Apply fade-in */}
-              {searchResults.results1?.SearchResult?.Items?.map((item: any) => (
-                <div key={item.ASIN} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
-                  <h3 className="font-semibold text-center">{item.ItemInfo.Title.DisplayValue}</h3>
-                  {item.Images?.Primary?.Small?.URL && (
-                    <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer">
+        <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full flex flex-col justify-between">
+          <div className={isFadingIn ? 'fade-in' : ''}>
+            {hasResults && searchResults ? (
+              searchResults.map((item: any, index: number) => (
+                <div key={index} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
+                  <h3 className="font-semibold text-center">{item.model_name}</h3>
+                  {item.image_url && (
+                    <a href={item.referral_link} target="_blank" rel="noopener noreferrer">
                       <img
-                        src={item.Images.Primary.Small.URL.replace("_SL75_", "_SL500_")}
-                        alt={item.ItemInfo.Title.DisplayValue}
-                        className="w-full h-auto max-w-[325px] max-h-[325px] object-contain"
+                        src={item.image_url} 
+                        alt={item.model_name}
+                        className="adjusted-image" 
                       />
                     </a>
                   )}
-                  {item.Offers?.Listings?.[0]?.Price?.DisplayAmount && (
-                    <p className="text-center">Precio: {item.Offers.Listings[0].Price.DisplayAmount || "No disponible"}</p>
+                  {item.price && (
+                    <p className="text-center text-gray-600">Precio: {item.price || "No disponible"}</p>
                   )}
-                  <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
-                    Ver en Amazon
+                  <a href={item.referral_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
+                    {t.click_for_details}
                   </a>
                 </div>
-              ))}
-              {searchResults.results2?.SearchResult?.Items?.map((item: any) => (
-                <div key={item.ASIN} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
-                  <h3 className="font-semibold text-center">{item.ItemInfo.Title.DisplayValue}</h3>
-                  {item.Images?.Primary?.Small?.URL && (
-                    <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={item.Images.Primary.Small.URL.replace("_SL75_", "_SL500_")}
-                        alt={item.ItemInfo.Title.DisplayValue}
-                        className="w-full h-auto max-w-[400px] max-h-[400px] object-contain"
-                      />
-                    </a>
-                  )}
-                  {item.Offers?.Listings?.[0]?.Price?.DisplayAmount && (
-                    <p className="text-center">Precio: {item.Offers.Listings[0].Price.DisplayAmount || "No disponible"}</p>
-                  )}
-                  <a href={item.DetailPageURL} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
-                    Ver en Amazon
-                  </a>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-gray-500">
-              No results yet. Please wait for the assistant to recommend golf ball models.
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="text-center text-gray-500">
+                {t.no_results_message}
+              </div>
+            )}
+          </div>
+
+          {/* Exit and Send Report Section */}
+          <div className="flex flex-col items-center justify-center mt-4 p-2 border-t border-gray-200 bg-[#f5f5f5] rounded-lg shadow-sm">
+            <label className="flex items-center space-x-2 mb-2 text-gray-700">
+              <input
+                type="checkbox"
+                checked={sendReport}
+                onChange={() => setSendReport(!sendReport)}
+                className="h-4 w-4 text-green-600 border-gray-300 rounded"
+              />
+              <span>{t.send_report_option}</span>
+            </label>
+            <button
+              onClick={handleExit}
+              className="bg-[#5BA862] text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-[#4a8a5a] transition duration-200"
+            >
+              {t.exit_button_text}
+            </button>
+          </div>
         </div>
 
-        {/* Styles for tags and fade-in animation */}
+        {/* Confirmation Modal */}
+        {showModal && (
+          <div className="modal-overlay">
+             <div className="modal-content">
+              <p className="text-lg font-semibold mb-4">{modalMessage}</p>
+              {showOkButton && (
+                <button
+                  onClick={handleModalClose}
+                  className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <style jsx>{`
           .fade-in {
             opacity: 0;
-            animation: fadeIn 3s forwards;
+            animation: fadeIn 4s forwards;
           }
-
           .tag {
             padding: 4px 8px;
             border-radius: 5px;
@@ -225,17 +324,39 @@ export default function Chat() {
             font-size: 0.9rem;
             margin-right: 10px;
           }
-
           .player-tag {
-            background-color: #34d399; /* Green color for player */
+            background-color: #B3C186; 
             color: white;
           }
-
           .assistant-tag {
-            background-color: #60a5fa; /* Blue color for assistant */
+            background-color: #60a5fa; 
             color: white;
           }
-
+          .adjusted-image {
+            max-width: 300px;  
+            max-height: 400px; 
+            object-fit: contain; 
+          }
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+          }
+          .modal-content {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+          }
           @keyframes fadeIn {
             to {
               opacity: 1;
@@ -246,5 +367,6 @@ export default function Chat() {
     </div>
   );
 }
+
 
 
