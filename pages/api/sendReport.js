@@ -19,9 +19,19 @@ const transporter = nodemailer.createTransport({
 });
 
 function isValidReport(content) {
-  const keywords = ["golf ball", "model", "recomanacions", "rendiment", "Titleist", "Callaway", "Srixon", "recommendation", "suitable", "ideal"];
-  return keywords.some((keyword) => content.includes(keyword)) && content.length > 100;
+  // Define las palabras clave que deberían aparecer en un informe válido.
+  const keywords = ["Titleist", "Callaway", "Srixon", "Bridgestone", "Vice", "Taylormade", "suitable", "ideal"];
+
+  // Comprueba si al menos una palabra clave aparece en el contenido.
+  const hasKeywords = keywords.some((keyword) => content.includes(keyword));
+
+  // Verifica si el contenido es suficientemente largo (más de 100 caracteres).
+  const hasSufficientLength = content.length > 100;
+
+  // Solo retorna `true` si el contenido tiene al menos una palabra clave y cumple con la longitud mínima.
+  return hasKeywords && hasSufficientLength;
 }
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
