@@ -130,7 +130,7 @@ export const translations: Record<'en' | 'es' | 'ca', {
     report_method_not_allowed: 'Método no permitido',
     report_invalid_conversation: 'Datos de conversación inválidos o ausentes',
     report_success_message: 'Informe enviado exitosamente',
-    report_prompt: 'Generar un informe de recomendaciones de modelos de pelotas de golf basado en la siguiente conversación y apelando a las características de los modelos de pelota y vinculándolas con las del juego del usuario, en formato Markdown, utilizando viñetas y encabezados cuando sea apropiado y agregando un estilo profesional.',
+    report_prompt: 'Eres un experto en bolas de golf. Genera un informe de recomendaciones de modelos de bola de golf a partir de la siguiente conversación y vinculándolos a las características del usuario, en formato Markdown, utilizando viñetas y encabezados en su caso y añadiendo un estilo profesional',
     report_invalid_content_message: 'El informe generado no es válido. Inténtelo nuevamente más tarde',
     report_send_failure_message: 'Hubo un problema al generar o enviar el informe. Inténtelo nuevamente',
     report_generating: 'El informe se está generando...',

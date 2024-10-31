@@ -19,19 +19,9 @@ const transporter = nodemailer.createTransport({
 });
 
 function isValidReport(content) {
-  // Define las palabras clave que deberían aparecer en un informe válido.
-  const keywords = ["Titleist", "Callaway", "Srixon", "Bridgestone", "Vice", "Taylormade", "suitable", "ideal"];
-
-  // Comprueba si al menos una palabra clave aparece en el contenido.
-  const hasKeywords = keywords.some((keyword) => content.includes(keyword));
-
-  // Verifica si el contenido es suficientemente largo (más de 100 caracteres).
-  const hasSufficientLength = content.length > 100;
-
-  // Solo retorna `true` si el contenido tiene al menos una palabra clave y cumple con la longitud mínima.
-  return hasKeywords && hasSufficientLength;
+  const keywords = ["golf ball", "model", "recomanacions", "Titleist", "Callaway", "Srixon", "suitable", "ideal"];
+  return keywords.some((keyword) => content.includes(keyword)) && content.length > 100;
 }
-
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -42,17 +32,21 @@ export default async function handler(req, res) {
   const { email, locale, conversation, userName } = req.body;
   const t = translations[locale] || translations.en;
 
+  // Verificar la validez de la conversación
   if (!conversation || !Array.isArray(conversation) || conversation.length === 0) {
     console.error("Conversation data is missing or invalid.");
     return res.status(400).json({ message: t.report_invalid_conversation });
   }
 
   try {
+    console.log("Generating report...");
+
     const messages = [
       { role: 'system', content: t.report_prompt },
       ...conversation,
     ];
 
+    // Llamada a la API de OpenAI
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages,
@@ -62,15 +56,16 @@ export default async function handler(req, res) {
     });
 
     const markdownContent = completion.choices[0].message.content.trim();
+    console.log("Generated markdown content:", markdownContent);
 
     if (!isValidReport(markdownContent)) {
+      console.error("Generated report content is not valid or relevant.");
       return res.status(500).json({ message: 'Generated report content is not valid or relevant.' });
     }
 
     const md = new MarkdownIt();
     const htmlContent = md.render(markdownContent);
 
-    // Incluir mensaje de despedida y logo
     const farewellMessage = t.farewell_message_with_logo || 'We hope the lakes spit out your balls. Have a great day!';
     const logoUrl = 'http://localhost:3000/bolasgolflogo.png';
     
@@ -84,16 +79,17 @@ export default async function handler(req, res) {
           <p style="font-size: 14px; margin-bottom: 10px;">${farewellMessage}</p>
           <img src="${logoUrl}" alt="bolas.golf logo" style="height: 40px; width: auto; margin-top: 10px;" />
         </div>
-       </body>
+      </body>
     </html>`;
 
-    // Log HTML content for debugging
-    console.log("Generated HTML for PDF:", fullHtmlContent);
+    console.log("Generated HTML content for PDF:", fullHtmlContent);
 
     const outputFilePath = path.join(process.cwd(), 'recommendation_report.pdf');
+
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.setContent(fullHtmlContent, { waitUntil: 'networkidle0' });
+
     await page.pdf({
       path: outputFilePath,
       format: 'A4',
@@ -104,9 +100,11 @@ export default async function handler(req, res) {
         right: '20mm'
       },
     });
+    console.log("PDF generated successfully at", outputFilePath);
 
     await browser.close();
 
+    // Enviar el correo electrónico con el PDF adjunto
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
@@ -121,13 +119,13 @@ export default async function handler(req, res) {
     });
 
     fs.unlinkSync(outputFilePath);
+    console.log("Email sent successfully to", email);
 
     res.status(200).json({ message: t.report_success_message });
   } catch (error) {
     console.error('Error generating or sending report:', error);
-    console.error('Full error details:', JSON.stringify(error, null, 2));
-    // Enviar un mensaje de error claro sin cerrar la sesión
-    res.status(500).json({ message: t.report_error_message });
+    // Proporciona detalles completos del error
+    res.status(500).json({ message: t.report_error_message, errorDetails: error.toString() });
   }
 }
 
