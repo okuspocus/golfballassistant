@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 });
 
 function isValidReport(content) {
-  const keywords = ["golf ball", "model", "recommendation", "suitable", "ideal"];
+  const keywords = ["golf ball", "model", "recomanacions", "rendiment", "Titleist", "Callaway", "Srixon", "recommendation", "suitable", "ideal"];
   return keywords.some((keyword) => content.includes(keyword)) && content.length > 100;
 }
 
@@ -60,6 +60,7 @@ export default async function handler(req, res) {
     const md = new MarkdownIt();
     const htmlContent = md.render(markdownContent);
 
+    // Incluir mensaje de despedida y logo
     const farewellMessage = t.farewell_message_with_logo || 'We hope the lakes spit out your balls. Have a great day!';
     const logoUrl = 'http://localhost:3000/bolasgolflogo.png';
     
@@ -75,6 +76,9 @@ export default async function handler(req, res) {
         </div>
        </body>
     </html>`;
+
+    // Log HTML content for debugging
+    console.log("Generated HTML for PDF:", fullHtmlContent);
 
     const outputFilePath = path.join(process.cwd(), 'recommendation_report.pdf');
     const browser = await puppeteer.launch();
@@ -111,6 +115,7 @@ export default async function handler(req, res) {
     res.status(200).json({ message: t.report_success_message });
   } catch (error) {
     console.error('Error generating or sending report:', error);
+    console.error('Full error details:', JSON.stringify(error, null, 2));
     // Enviar un mensaje de error claro sin cerrar la sesión
     res.status(500).json({ message: t.report_error_message });
   }
