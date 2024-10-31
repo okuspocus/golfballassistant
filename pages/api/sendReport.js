@@ -18,6 +18,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+function isValidReport(content) {
+  const keywords = ["golf ball", "model", "recomanacions", "rendiment", "Titleist", "Callaway", "Srixon", "recommendation", "suitable", "ideal"];
+  return keywords.some((keyword) => content.includes(keyword)) && content.length > 100;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
@@ -42,17 +47,43 @@ export default async function handler(req, res) {
       model: 'gpt-3.5-turbo',
       messages,
       max_tokens: 500,
+      temperature: 0.2,
+      top_p: 0.8,
     });
 
     const markdownContent = completion.choices[0].message.content.trim();
 
+    if (!isValidReport(markdownContent)) {
+      return res.status(500).json({ message: 'Generated report content is not valid or relevant.' });
+    }
+
     const md = new MarkdownIt();
     const htmlContent = md.render(markdownContent);
+
+    // Incluir mensaje de despedida y logo
+    const farewellMessage = t.farewell_message_with_logo || 'We hope the lakes spit out your balls. Have a great day!';
+    const logoUrl = 'http://localhost:3000/bolasgolflogo.png';
+    
+    const fullHtmlContent = `
+    <html>
+      <body style="font-family: Arial, sans-serif;">
+        <h2 style="text-align: center; font-size: 24px;">${t.report_title} ${userName}</h2>
+        <p style="text-align: center; font-size: 14px;">${t.report_thanks_message}</p>
+        ${htmlContent}
+        <div style="text-align: center; margin-top: 30px;">
+          <p style="font-size: 14px; margin-bottom: 10px;">${farewellMessage}</p>
+          <img src="${logoUrl}" alt="bolas.golf logo" style="height: 40px; width: auto; margin-top: 10px;" />
+        </div>
+       </body>
+    </html>`;
+
+    // Log HTML content for debugging
+    console.log("Generated HTML for PDF:", fullHtmlContent);
 
     const outputFilePath = path.join(process.cwd(), 'recommendation_report.pdf');
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.setContent(`<html><body><h1>${t.report_title} ${userName}</h1><p>${t.report_thanks_message}</p>${htmlContent}</body></html>`);
+    await page.setContent(fullHtmlContent, { waitUntil: 'networkidle0' });
     await page.pdf({
       path: outputFilePath,
       format: 'A4',
@@ -84,7 +115,9 @@ export default async function handler(req, res) {
     res.status(200).json({ message: t.report_success_message });
   } catch (error) {
     console.error('Error generating or sending report:', error);
-    res.status(500).json({ message: 'Error generating or sending report' });
+    console.error('Full error details:', JSON.stringify(error, null, 2));
+    // Enviar un mensaje de error claro sin cerrar la sesión
+    res.status(500).json({ message: t.report_error_message });
   }
 }
 

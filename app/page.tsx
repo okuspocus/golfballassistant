@@ -116,15 +116,21 @@ export default function UserForm() {
 
       {/* Main content */}
       <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
-        <div className="text-center">
-          <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
-            GolfBallAssistant
-          </h1>
-          <p className="text-lg font-bold text-gray-700 mt-2">
-            Golf balls look the same. They are not.
-          </p>
-        </div>
-      </header>
+  <div className="text-center relative">
+    <div className="flex items-center justify-center gap-2">
+      <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
+        GolfBallAssistant
+      </h1>
+      <div className="flex items-center ml-2">
+        <span className="mr-1 text-sm text-gray-700">by</span>
+        <img src="bolasgolflogo.png" alt="Logo Bolas.golf" className="logo-enhanced" />
+      </div>
+    </div>
+    <p className="text-lg font-bold text-gray-700 mt-2">
+      Golf balls look the same. They are not.
+    </p>
+  </div>
+</header>
 
       {/* Centered Persuasive Text */}
       <div className="flex flex-col items-center justify-center mt-48 mb-8 text-center z-20">

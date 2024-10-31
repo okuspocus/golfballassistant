@@ -94,3 +94,9 @@ body {
 .modal-button:hover {
   background-color: #4a8a5a;
 }
+
+.logo-enhanced {
+  width: 8rem; /* Ajustado a cuatro veces el tamaño pequeño */
+  height: auto;
+  opacity: 0.85;
+}
