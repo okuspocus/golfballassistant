@@ -1,6 +1,6 @@
 // pages/api/saveUser.js 
 import crypto from 'crypto';
-import fs from 'fs';
+import fs from 'fs/promises';  // Import fs/promises para usar promesas en lugar de callbacks
 import path from 'path';
 
 const ALGORITHM = 'aes-256-cbc';
@@ -33,18 +33,15 @@ export default async function handler(req, res) {
     // Guardar en formato IV:encryptedText
     const encryptedData = `${iv.toString('hex')}:${encrypted.toString('hex')}\n`;
     
-    // Escribir en el archivo y enviar la respuesta
-    fs.appendFile(csvFilePath, encryptedData, (err) => {
-      if (err) {
-        console.error('Error al guardar los datos:', err);
-        return res.status(500).json({ message: 'Error al guardar los datos' });
-      }
-      // Respuesta exitosa
-      return res.status(200).json({ message: 'Datos guardados exitosamente' });
-    });
+    // Escribir en el archivo usando fs.promises.appendFile
+    await fs.appendFile(csvFilePath, encryptedData);
+
+    // Respuesta exitosa
+    return res.status(200).json({ message: 'Datos guardados exitosamente' });
+
   } catch (error) {
     console.error('Unexpected error:', error);
-    res.status(500).json({ message: 'Unexpected error occurred' });
+    return res.status(500).json({ message: 'Unexpected error occurred' });
   }
 }
 

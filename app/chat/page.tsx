@@ -18,13 +18,14 @@ export default function Chat() {
   const [hasResults, setHasResults] = useState<boolean>(false);
   const [isFadingIn, setIsFadingIn] = useState(false);
   const [sendReport, setSendReport] = useState(false);
-  const [showModal, setShowModal] = useState(false); 
+  const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState(""); 
-  const [showOkButton, setShowOkButton] = useState(false); // Estado para controlar la visibilidad del botón OK
+  const [showOkButton, setShowOkButton] = useState(false); 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState(true); 
+  const [reportSuccess, setReportSuccess] = useState(false); // Estado para rastrear el éxito del informe
 
   const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
   const [localeLoaded, setLocaleLoaded] = useState(false);
@@ -132,7 +133,8 @@ export default function Chat() {
       setModalMessage(t.report_generating);
       setShowModal(true);
       setShowOkButton(false);
-  
+      setReportSuccess(false); // Reiniciar estado de éxito
+
       try {
         // Enviar informe
         const reportResponse = await fetch('/api/sendReport', { 
@@ -141,12 +143,14 @@ export default function Chat() {
           body: JSON.stringify({ email: userEmail, locale, conversation, userName }) 
         });
         const reportData = await reportResponse.json();
+        
         if (!reportResponse.ok) {
           const errorMessage = reportData.errorType === 'invalidReport' ? 
             t.report_invalid_content_message : t.report_send_failure_message;
           setModalMessage(errorMessage);
         } else {
           setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
+          setReportSuccess(true); // Marcar como éxito si se envía correctamente
         }
       } catch {
         setModalMessage(t.report_error_message);
@@ -173,11 +177,12 @@ export default function Chat() {
     }
   };
 
-  
   const handleModalClose = () => {
     setShowModal(false);
-    sessionStorage.clear();
-    router.push("/");
+    if (reportSuccess) {
+      sessionStorage.clear();
+      router.push("/");
+    }
   };
 
   if (loading) {
@@ -191,15 +196,21 @@ export default function Chat() {
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
       <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
-        <div className="text-center">
-          <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
-            GolfBallAssistant
-          </h1>
-          <p className="text-lg font-bold text-gray-700 mt-2">
-            Golf balls look the same. They are not.
-          </p>
-        </div>
-      </header>
+  <div className="text-center relative">
+    <div className="flex items-center justify-center gap-2">
+      <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
+        GolfBallAssistant
+      </h1>
+      <div className="flex items-center ml-2">
+        <span className="mr-1 text-sm text-gray-700">by</span>
+        <img src="bolasgolflogo.png" alt="Logo Bolas.golf" className="logo-enhanced" />
+      </div>
+    </div>
+    <p className="text-lg font-bold text-gray-700 mt-2">
+      Golf balls look the same. They are not.
+    </p>
+  </div>
+</header>
 
       <div className="flex flex-row w-full h-full mt-24 mx-auto overflow-hidden">
         <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300 relative">
