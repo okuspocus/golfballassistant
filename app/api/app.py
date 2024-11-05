@@ -13,10 +13,10 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 # Función para conectarse a la base de datos
 def get_db_connection():
     try:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)  # RealDictCursor devuelve los resultados como diccionarios
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
         return conn
     except Exception as e:
-        print(f"Error al conectar con la base de datos: {e}")
+        app.logger.error(f"Error al conectar con la base de datos: {e}")
         return None
 
 @app.route('/search', methods=['POST'])
