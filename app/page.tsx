@@ -105,7 +105,7 @@ export default function UserForm() {
       
       <div
         className="absolute inset-0 bg-cover bg-center filter blur-lg brightness-75"
-        style={{ backgroundImage: `url("${basePath}/images/golf-course.jpg")` }}  // Actualizar ruta
+        style={{ backgroundImage: `url("${basePath}/golf-course.jpg")` }}  // Actualizar ruta
       ></div>
 
       <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
@@ -116,7 +116,7 @@ export default function UserForm() {
             </h1>
             <div className="flex items-center ml-2">
               <span className="mr-1 text-sm text-gray-700">by</span>
-              <img src={`${basePath}/images/bolasgolflogo.png`} alt="Logo Bolas.golf" className="logo-enhanced" />
+              <img src={`${basePath}/bolasgolflogo.png`} alt="Logo Bolas.golf" className="logo-enhanced" />
             </div>
           </div>
         </div>
