@@ -1,6 +1,6 @@
 //app/page.tsx
 "use client";
-
+import { basePath } from "../config";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Head from 'next/head';
@@ -100,37 +100,27 @@ export default function UserForm() {
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden">
       <Head>
-        <title>{t.meta_title}</title>
-        <meta name="description" content={t.meta_description} />
-        <meta name="keywords" content="ai golf balls, golf balls ai, golf ball recommender, golf ball assistant" />
-        <meta name="robots" content="index, follow" />
-        <meta name="author" content="GolfBallAssistant" />
-        <link rel="canonical" href="https://bolas.golf/app" />
+        <link rel="canonical" href={`https://bolas.golf${basePath}`} />
       </Head>
+      
+      <div
+        className="absolute inset-0 bg-cover bg-center filter blur-lg brightness-75"
+        style={{ backgroundImage: `url("${basePath}/golf-course.jpg")` }}  // Actualizar ruta
+      ></div>
 
-      {/* Background image with blur */}
-      <div className="absolute inset-0 bg-cover bg-center filter blur-lg brightness-75" style={{ backgroundImage: 'url("/golf-course.jpg")' }}></div>
-
-      {/* Overlay to darken the background */}
-      <div className="absolute inset-0 bg-black opacity-40"></div>
-
-      {/* Main content */}
       <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
-  <div className="text-center relative">
-    <div className="flex items-center justify-center gap-2">
-      <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
-        GolfBallAssistant
-      </h1>
-      <div className="flex items-center ml-2">
-        <span className="mr-1 text-sm text-gray-700">by</span>
-        <img src="bolasgolflogo.png" alt="Logo Bolas.golf" className="logo-enhanced" />
-      </div>
-    </div>
-    <p className="text-lg font-bold text-gray-700 mt-2">
-      Golf balls look the same. They are not.
-    </p>
-  </div>
-</header>
+        <div className="text-center relative">
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
+              GolfBallAssistant
+            </h1>
+            <div className="flex items-center ml-2">
+              <span className="mr-1 text-sm text-gray-700">by</span>
+              <img src={`${basePath}/bolasgolflogo.png`} alt="Logo Bolas.golf" className="logo-enhanced" />
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Centered Persuasive Text */}
       <div className="flex flex-col items-center justify-center mt-48 mb-8 text-center z-20">
