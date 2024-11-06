@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { knownBallModels } from "./ballmodels";
 import translations from '../../translations/translations';
+import { basePath } from "../../config"; // Importar basePath desde config.js
 
 function extractBallModels(responseText: string): string[] {
   return knownBallModels.filter((model) => responseText.includes(model));
@@ -12,6 +13,7 @@ function extractBallModels(responseText: string): string[] {
 
 export default function Chat() {
   const router = useRouter();
+
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat();
   const [searchResults, setSearchResults] = useState<any>(null);
   const [previousBallModels, setPreviousBallModels] = useState<string[]>([]);
@@ -25,7 +27,7 @@ export default function Chat() {
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState(true); 
-  const [reportSuccess, setReportSuccess] = useState(false); // Estado para rastrear el éxito del informe
+  const [reportSuccess, setReportSuccess] = useState(false); 
 
   const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
   const [localeLoaded, setLocaleLoaded] = useState(false);
@@ -84,7 +86,7 @@ export default function Chat() {
       if (ballModels.length > 0 && JSON.stringify(ballModels) !== JSON.stringify(previousBallModels)) {
         setPreviousBallModels(ballModels);
         const fetchPromises = [
-          fetch('http://127.0.0.1:5000/search', {
+          fetch(`${basePath}/api/search`, {  // Ruta de API con basePath
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ keywords: ballModels[0] })
@@ -93,7 +95,7 @@ export default function Chat() {
 
         if (ballModels.length > 1) {
           fetchPromises.push(
-            fetch('http://127.0.0.1:5000/search', {
+            fetch(`${basePath}/api/search`, {  // Segunda llamada API con basePath
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ keywords: ballModels[1] })
@@ -126,18 +128,16 @@ export default function Chat() {
     const userEmail = sessionStorage.getItem("userEmail");
     const userName = sessionStorage.getItem("userName");
   
-    // Capturar los mensajes de la conversación
     const conversation = messages.map(msg => ({ role: msg.role, content: msg.content }));
   
     if (sendReport && userEmail) {
       setModalMessage(t.report_generating);
       setShowModal(true);
       setShowOkButton(false);
-      setReportSuccess(false); // Reiniciar estado de éxito
+      setReportSuccess(false);
 
       try {
-        // Enviar informe
-        const reportResponse = await fetch('/api/sendReport', { 
+        const reportResponse = await fetch(`${basePath}/api/sendReport`, {  // Ruta de API con basePath
           method: 'POST', 
           headers: { 'Content-Type': 'application/json' }, 
           body: JSON.stringify({ email: userEmail, locale, conversation, userName }) 
@@ -150,7 +150,7 @@ export default function Chat() {
           setModalMessage(errorMessage);
         } else {
           setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
-          setReportSuccess(true); // Marcar como éxito si se envía correctamente
+          setReportSuccess(true);
         }
       } catch {
         setModalMessage(t.report_error_message);
@@ -163,10 +163,9 @@ export default function Chat() {
       setShowOkButton(true);
     }
   
-    // Guardar los datos en el CSV al final de la interacción
     if (userEmail && userName) {
       try {
-        await fetch('/api/saveUser', {
+        await fetch(`${basePath}/api/saveUser`, {  // Ruta de API con basePath
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: userName, email: userEmail })
@@ -196,28 +195,28 @@ export default function Chat() {
   return (
     <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
       <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
-  <div className="text-center relative">
-    <div className="flex items-center justify-center gap-2">
-      <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
-        GolfBallAssistant
-      </h1>
-      <div className="flex items-center ml-2">
-        <span className="mr-1 text-sm text-gray-700">by</span>
-        <img src="bolasgolflogo.png" alt="Logo Bolas.golf" className="logo-enhanced" />
-      </div>
-    </div>
-    <p className="text-lg font-bold text-gray-700 mt-2">
-      Golf balls look the same. They are not.
-    </p>
-  </div>
-</header>
+        <div className="text-center relative">
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
+              GolfBallAssistant
+            </h1>
+            <div className="flex items-center ml-2">
+              <span className="mr-1 text-sm text-gray-700">by</span>
+              <img src={`${basePath}/images/bolasgolflogo.png`} alt="Logo Bolas.golf" className="logo-enhanced" /> {/* Ruta de imagen con basePath */}
+            </div>
+          </div>
+          <p className="text-lg font-bold text-gray-700 mt-2">
+            Golf balls look the same. They are not.
+          </p>
+        </div>
+      </header>
 
       <div className="flex flex-row w-full h-full mt-24 mx-auto overflow-hidden">
         <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300 relative">
           <div 
             className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50" 
             style={{ 
-              backgroundImage: 'url("/golf-ball.jpg")',
+              backgroundImage: `url("${basePath}/images/golf-ball.jpg")`, // Ruta de imagen con basePath
               pointerEvents: 'none',
               filter: 'blur(8px)'
             }} 
@@ -243,141 +242,10 @@ export default function Chat() {
               </div>
             )}
           </div>
-
-          <div className="bg-white shadow-lg p-4 border-t border-gray-300">
-            <form onSubmit={handleSubmit} className="mb-4">
-              <input
-                className="w-full p-4 mb-2 border-4 border-blue-400 rounded-lg shadow-lg bg-white focus:outline-none focus:ring-4 focus:ring-blue-400 focus:border-blue-400 text-black text-lg transition-all duration-300 ease-in-out transform hover:scale-102"
-                value={input}
-                placeholder={t.start_placeholder} 
-                onChange={handleInputChange}
-              />
-            </form>
-          </div>
         </div>
-
-        <div className="w-1/3 h-full bg-white shadow-lg p-4 overflow-y-auto max-h-full flex flex-col justify-between">
-          <div className={isFadingIn ? 'fade-in' : ''}>
-            {hasResults && searchResults ? (
-              searchResults.map((item: any, index: number) => (
-                <div key={index} className="border-b border-gray-300 py-2 flex flex-col justify-center items-center">
-                  <h3 className="font-semibold text-center">{item.model_name}</h3>
-                  {item.image_url && (
-                    <a href={item.referral_link} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={item.image_url} 
-                        alt={item.model_name}
-                        className="adjusted-image" 
-                      />
-                    </a>
-                  )}
-                  {item.price && (
-                    <p className="text-center text-gray-600">Precio: {item.price || "No disponible"}</p>
-                  )}
-                  <a href={item.referral_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-center">
-                    {t.click_for_details}
-                  </a>
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500">
-                {t.no_results_message}
-              </div>
-            )}
-          </div>
-
-          {/* Exit and Send Report Section */}
-          <div className="flex flex-col items-center justify-center mt-4 p-2 border-t border-gray-200 bg-[#f5f5f5] rounded-lg shadow-sm">
-            <label className="flex items-center space-x-2 mb-2 text-gray-700">
-              <input
-                type="checkbox"
-                checked={sendReport}
-                onChange={() => setSendReport(!sendReport)}
-                className="h-4 w-4 text-green-600 border-gray-300 rounded"
-              />
-              <span>{t.send_report_option}</span>
-            </label>
-            <button
-              onClick={handleExit}
-              className="bg-[#5BA862] text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-[#4a8a5a] transition duration-200"
-            >
-              {t.exit_button_text}
-            </button>
-          </div>
-        </div>
-
-        {/* Confirmation Modal */}
-        {showModal && (
-          <div className="modal-overlay">
-             <div className="modal-content">
-              <p className="text-lg font-semibold mb-4">{modalMessage}</p>
-              {showOkButton && (
-                <button
-                  onClick={handleModalClose}
-                  className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
-                >
-                  OK
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        <style jsx>{`
-          .fade-in {
-            opacity: 0;
-            animation: fadeIn 4s forwards;
-          }
-          .tag {
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-right: 10px;
-          }
-          .player-tag {
-            background-color: #B3C186; 
-            color: white;
-          }
-          .assistant-tag {
-            background-color: #60a5fa; 
-            color: white;
-          }
-          .adjusted-image {
-            max-width: 300px;  
-            max-height: 400px; 
-            object-fit: contain; 
-          }
-          .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-          }
-          .modal-content {
-            background-color: #ffffff;
-            padding: 24px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 400px;
-            text-align: center;
-          }
-          @keyframes fadeIn {
-            to {
-              opacity: 1;
-            }
-          }
-        `}</style>
       </div>
     </div>
   );
 }
-
 
 
