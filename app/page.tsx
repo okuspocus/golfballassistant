@@ -117,14 +117,14 @@ export default function UserForm() {
 
       {/* Main content */}
       <header className="w-full py-6 fixed top-0 z-10 border-b border-gray-200 shadow-md bg-opacity-75" style={{ backgroundColor: "#B3C186" }}>
-        <h1 className="text-center text-[6vw] lg:text-4xl font-light text-gray-900 tracking-widest uppercase max-w-xs lg:max-w-lg mx-auto">
+        <h1 className="text-center text-[7vw] lg:text-4xl font-light text-gray-900 tracking-widest uppercase max-w-xs lg:max-w-lg mx-auto">
           GolfBallAssistant
         </h1>
       </header>
 
       {/* Centered Persuasive Text */}
-      <div className="flex flex-col items-center justify-center mt-14 mb-1 text-center z-20">
-        <p className="persuasive-text text-white mb-6 max-w-md">
+      <div className="flex flex-col items-center justify-center mt-1 mb-1 text-center z-20">
+        <p className="persuasive-text text-white mb-7 max-w-md">
           {t.persuasive_text}
         </p>
         <p className="persuasive-subtext text-white max-w-md">
