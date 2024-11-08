@@ -25,7 +25,8 @@ export default function Chat() {
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState(true); 
-  const [reportSuccess, setReportSuccess] = useState(false); // Estado para rastrear el éxito del informe
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false); // Nueva variable para detectar dispositivo
 
   const [locale, setLocale] = useState<'en' | 'es' | 'ca'>('en');
   const [localeLoaded, setLocaleLoaded] = useState(false);
@@ -122,21 +123,33 @@ export default function Chat() {
     }
   }, [messages, previousBallModels]);
 
+  // Detectar si el dispositivo es móvil
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    handleResize(); // Detectar tamaño al cargar la página
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const handleExit = async () => {
     const userEmail = sessionStorage.getItem("userEmail");
     const userName = sessionStorage.getItem("userName");
   
-    // Capturar los mensajes de la conversación
     const conversation = messages.map(msg => ({ role: msg.role, content: msg.content }));
   
     if (sendReport && userEmail) {
       setModalMessage(t.report_generating);
       setShowModal(true);
       setShowOkButton(false);
-      setReportSuccess(false); // Reiniciar estado de éxito
+      setReportSuccess(false);
 
       try {
-        // Enviar informe
         const reportResponse = await fetch('/api/sendReport', { 
           method: 'POST', 
           headers: { 'Content-Type': 'application/json' }, 
@@ -150,7 +163,7 @@ export default function Chat() {
           setModalMessage(errorMessage);
         } else {
           setModalMessage(`${t.report_sent_message} ${t.farewell_message}`);
-          setReportSuccess(true); // Marcar como éxito si se envía correctamente
+          setReportSuccess(true);
         }
       } catch {
         setModalMessage(t.report_error_message);
@@ -163,7 +176,6 @@ export default function Chat() {
       setShowOkButton(true);
     }
   
-    // Guardar los datos en el CSV al final de la interacción
     if (userEmail && userName) {
       try {
         await fetch('/api/saveUser', {
@@ -194,25 +206,14 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col w-full h-screen py-24 mx-auto overflow-hidden bg-gray-100">
-      <header className="w-full py-8 fixed top-0 z-10 border-b border-gray-200 shadow-md" style={{ backgroundColor: "#B3C186" }}>
-  <div className="text-center relative">
-    <div className="flex items-center justify-center gap-2">
-      <h1 className="text-4xl font-light text-gray-900 tracking-widest uppercase">
-        GolfBallAssistant
-      </h1>
-      <div className="flex items-center ml-2">
-        <span className="mr-1 text-sm text-gray-700">by</span>
-        <img src="bolasgolflogo.png" alt="Logo Bolas.golf" className="logo-enhanced" />
-      </div>
-    </div>
-    <p className="text-lg font-bold text-gray-700 mt-2">
-      Golf balls look the same. They are not.
-    </p>
-  </div>
-</header>
+    <div className="flex flex-col w-full h-screen pt-20 mx-auto overflow-hidden bg-gray-100">
+      <header className="w-full py-6 fixed top-0 z-10 border-b border-gray-200 shadow-md bg-[#B3C186] text-center">
+        <h1 className="text-3xl font-light text-gray-900 tracking-widest uppercase">
+          GolfBallAssistant
+        </h1>
+      </header>
 
-      <div className="flex flex-row w-full h-full mt-24 mx-auto overflow-hidden">
+      <div className="flex flex-row w-full h-full mt-6 mx-auto overflow-hidden">
         <div className="flex-grow flex flex-col w-2/3 h-full border-r border-gray-300 relative">
           <div 
             className="absolute inset-0 bg-no-repeat bg-center bg-cover opacity-50" 
@@ -268,6 +269,10 @@ export default function Chat() {
                         src={item.image_url} 
                         alt={item.model_name}
                         className="adjusted-image" 
+                        style={{
+                          maxWidth: isMobile ? "100px" : "300px",
+                          maxHeight: isMobile ? "200px" : "400px"
+                        }}
                       />
                     </a>
                   )}
@@ -286,7 +291,6 @@ export default function Chat() {
             )}
           </div>
 
-          {/* Exit and Send Report Section */}
           <div className="flex flex-col items-center justify-center mt-4 p-2 border-t border-gray-200 bg-[#f5f5f5] rounded-lg shadow-sm">
             <label className="flex items-center space-x-2 mb-2 text-gray-700">
               <input
@@ -306,10 +310,9 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Confirmation Modal */}
         {showModal && (
           <div className="modal-overlay">
-             <div className="modal-content">
+            <div className="modal-content">
               <p className="text-lg font-semibold mb-4">{modalMessage}</p>
               {showOkButton && (
                 <button
@@ -344,9 +347,7 @@ export default function Chat() {
             color: white;
           }
           .adjusted-image {
-            max-width: 300px;  
-            max-height: 400px; 
-            object-fit: contain; 
+            object-fit: contain;
           }
           .modal-overlay {
             position: fixed;

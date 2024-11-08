@@ -7,7 +7,7 @@ import path from 'path';
 import translations from '../../translations/translations';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY_DAN,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const transporter = nodemailer.createTransport({

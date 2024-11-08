@@ -24,33 +24,49 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  font-size: 16px; /* Base font size */
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+
+  button {
+    font-size: 1rem;
+    padding: 12px 16px;
   }
 }
-/* Estilos específicos para el modal de despedida */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+
+img {
+  max-width: 100%;
+  height: auto; /* Escalar proporcionalmente */
 }
 
-.modal-content {
-  background-color: #ffffff; /* Fondo blanco para el modal */
-  color: #333333; /* Texto en color oscuro */
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  text-align: center;
-  max-width: 90%;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+.adjusted-image {
+  max-width: 150px;
+  margin: 0 auto;
 }
+
+@media (max-width: 768px) {
+  .adjusted-image {
+    max-width: 100px;
+  }
+}
+
+/* Modal adjustments */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -66,37 +82,54 @@ body {
 
 .modal-content {
   background-color: #ffffff;
-  color: #000000; /* Asegura que el texto se vea */
-  padding: 20px;
+  padding: 16px;
   border-radius: 8px;
   width: 90%;
-  max-width: 400px;
+  max-width: 350px;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.modal-message {
-  font-size: 1.1rem;
-  color: #000000; /* Color del texto del mensaje */
-  margin-bottom: 15px;
+/* Solución para alinear checkboxes y texto */
+.checkbox-container {
+  display: flex;
+  align-items: center; /* Alinear verticalmente checkbox y texto */
+  gap: 0.5rem; /* Espaciado entre el checkbox y el texto */
 }
 
-.modal-button {
-  background-color: #5BA862;
-  color: #ffffff;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+input[type="checkbox"] {
+  margin: 0;
+  padding: 0;
+  vertical-align: middle; /* Asegura el checkbox alineado */
+  width: 1.4rem; /* Tamaño del checkbox */
+  height: 1.3rem; /* Tamaño del checkbox */
 }
 
-.modal-button:hover {
-  background-color: #4a8a5a;
+.checkbox-container label {
+  font-size: 1.5rem; /* Ajusta según sea necesario */
+  line-height: 1.5; /* Alineación con el checkbox */
 }
 
-.logo-enhanced {
-  width: 8rem; /* Ajustado a cuatro veces el tamaño pequeño */
-  height: auto;
-  opacity: 0.85;
+/* Estilo para textos persuasivos */
+.persuasive-text {
+  font-size: 2.5rem; /* Tamaño por defecto */
+  line-height: 1.4;
+}
+
+.persuasive-subtext {
+  font-size: 1.5rem; /* Tamaño por defecto */
+  line-height: 1.3;
+}
+
+/* Adaptaciones para móviles */
+@media (max-width: 768px) {
+  .persuasive-text {
+    font-size: 1.6rem; /* Más grande en móviles */
+    line-height: 1.2;
+  }
+
+  .persuasive-subtext {
+    font-size: 1.3rem; /* Subtítulo también más grande */
+    line-height: 1.2;
+  }
 }
