@@ -1,13 +1,14 @@
-import OpenAI from 'openai';
-import nodemailer from 'nodemailer';
+import OpenAI from "openai";
+import { OpenAIStream, StreamingTextResponse } from "ai";
 import MarkdownIt from 'markdown-it';
 import puppeteer from 'puppeteer';
+import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import translations from '../../translations/translations';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY_DAN,
 });
 
 const transporter = nodemailer.createTransport({
@@ -18,9 +19,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-function isValidReport(content) {
-  const keywords = ["golf ball", "model", "recomanacions", "Titleist", "Callaway", "Srixon", "suitable", "ideal"];
-  return keywords.some((keyword) => content.includes(keyword)) && content.length > 100;
+function hasValidRecommendations(content) {
+  const keywords = ["Bridgestone", "Callaway", "TaylorMade", "Titleist", "Wilson", "Srixon"];
+  return keywords.some((keyword) => content.includes(keyword)) && content.length > 150;
 }
 
 export default async function handler(req, res) {
@@ -38,6 +39,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: t.report_invalid_conversation });
   }
 
+  // Extraer el último mensaje de la conversación de OpenAI (que debería ser la recomendación)
+  const openAiMessage = conversation[conversation.length - 1]?.content;
+
+  if (!hasValidRecommendations(openAiMessage)) {
+    // Si no hay recomendaciones, retornar un error
+    return res.status(400).json({ message: "No hay recomendaciones que informar." });
+  }
+
   try {
     console.log("Generating report...");
 
@@ -46,7 +55,7 @@ export default async function handler(req, res) {
       ...conversation,
     ];
 
-    // Llamada a la API de OpenAI
+    // Llamada a la API de OpenAI para generar el contenido del informe
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages,
@@ -58,6 +67,7 @@ export default async function handler(req, res) {
     const markdownContent = completion.choices[0].message.content.trim();
     console.log("Generated markdown content:", markdownContent);
 
+    // Si el informe generado no es válido, retornar error
     if (!isValidReport(markdownContent)) {
       console.error("Generated report content is not valid or relevant.");
       return res.status(500).json({ message: 'Generated report content is not valid or relevant.' });
@@ -66,7 +76,7 @@ export default async function handler(req, res) {
     const md = new MarkdownIt();
     const htmlContent = md.render(markdownContent);
 
-    const farewellMessage = t.farewell_message_with_logo || 'We hope the lakes spit out your balls. Have a great day!';
+    const farewellMessage = t.farewell_message_with_logo || 'Have a great day!';
     const logoUrl = 'http://localhost:3000/bolasgolflogo.png';
     
     const fullHtmlContent = `
@@ -124,9 +134,13 @@ export default async function handler(req, res) {
     res.status(200).json({ message: t.report_success_message });
   } catch (error) {
     console.error('Error generating or sending report:', error);
-    // Proporciona detalles completos del error
     res.status(500).json({ message: t.report_error_message, errorDetails: error.toString() });
   }
+}
+
+function isValidReport(content) {
+  const keywords = ["Bridgestone", "Callaway", "TaylorMade", "Titleist", "Wilson", "Srixon", "Titleist"];
+  return keywords.some((keyword) => content.includes(keyword)) && content.length > 150;
 }
 
 

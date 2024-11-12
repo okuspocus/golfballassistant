@@ -170,12 +170,16 @@ export default function Chat() {
       }
   
       setShowOkButton(true);
+      
     } else {
+     
       setShowModal(true);
       setModalMessage(`${t.farewell_message}`);
       setShowOkButton(true);
+      setReportSuccess(true);
+      setTimeout(handleModalClose,5000);
     }
-  
+    
     if (userEmail && userName) {
       try {
         await fetch('/api/saveUser', {
@@ -187,14 +191,16 @@ export default function Chat() {
         console.error("Error saving user data:", error);
       }
     }
+    
   };
-
+  
   const handleModalClose = () => {
     setShowModal(false);
     if (reportSuccess) {
       sessionStorage.clear();
       router.push("/");
     }
+
   };
 
   if (loading) {
@@ -292,89 +298,75 @@ export default function Chat() {
           </div>
 
           <div className="flex flex-col items-center justify-center mt-4 p-2 border-t border-gray-200 bg-[#f5f5f5] rounded-lg shadow-sm">
-            <label className="flex items-center space-x-2 mb-2 text-gray-700">
-              <input
-                type="checkbox"
-                checked={sendReport}
-                onChange={() => setSendReport(!sendReport)}
-                className="h-4 w-4 text-green-600 border-gray-300 rounded"
-              />
-              <span>{t.send_report_option}</span>
-            </label>
-            <button
-              onClick={handleExit}
-              className="bg-[#5BA862] text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-[#4a8a5a] transition duration-200"
-            >
-              {t.exit_button_text}
-            </button>
-          </div>
+  <label className="flex items-start space-x-2 mb-2 text-gray-700">
+    <input
+      type="checkbox"
+      checked={sendReport}
+      onChange={() => setSendReport(!sendReport)}
+      className="h-5 w-5 text-green-600 border-gray-300 rounded align-top"
+    />
+    <span className="leading-tight">{t.send_report_option}</span>
+  </label>
+  <button
+    onClick={handleExit}
+    className="bg-[#5BA862] text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-[#4a8a5a] transition duration-200"
+  >
+    {t.exit_button_text}
+  </button>
+</div>
+
         </div>
 
         {showModal && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <p className="text-lg font-semibold mb-4">{modalMessage}</p>
-              {showOkButton && (
-                <button
-                  onClick={handleModalClose}
-                  className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
-                >
-                  OK
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <p className="modal-message text-lg font-semibold mb-4">{modalMessage}</p> {/* Mensaje dinámico */}
+      {showOkButton && (
+        <button
+          onClick={handleModalClose}
+          className="bg-[#5BA862] text-white px-4 py-2 rounded-lg hover:bg-[#4a8a5a] transition duration-200"
+        >
+          OK
+        </button>
+      )}
+    </div>
+  </div>
+)}
 
-        <style jsx>{`
-          .fade-in {
-            opacity: 0;
-            animation: fadeIn 4s forwards;
-          }
-          .tag {
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-right: 10px;
-          }
-          .player-tag {
-            background-color: #B3C186; 
-            color: white;
-          }
-          .assistant-tag {
-            background-color: #60a5fa; 
-            color: white;
-          }
-          .adjusted-image {
-            object-fit: contain;
-          }
-          .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-          }
-          .modal-content {
-            background-color: #ffffff;
-            padding: 24px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 400px;
-            text-align: center;
-          }
-          @keyframes fadeIn {
-            to {
-              opacity: 1;
-            }
-          }
-        `}</style>
+<style jsx>{`
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background-color: #ffffff;  // Fondo blanco para el modal
+    padding: 24px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+  }
+  .modal-message {
+    font-size: 16px;
+    color: #333;  // Color de texto oscuro para mayor legibilidad
+    margin-bottom: 20px;
+  }
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+`}</style>
+
+
       </div>
     </div>
   );

@@ -47,5 +47,7 @@ export const knownBallModels = [
   "Bridgestone Tour B RX",
   "Wilson Staff Duo Soft",
   "Wilson Staff Duo Professional",
-  "Wilson Duo Soft"
+  "Wilson Duo Soft",
+  "Wilson Duo Professional",
+  
 ];
