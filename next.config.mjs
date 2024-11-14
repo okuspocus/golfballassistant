@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+
+  basePath: '/golfballassistant',
+  // otras configuraciones opcionales
+};
 
 export default nextConfig;
