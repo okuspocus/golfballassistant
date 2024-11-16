@@ -177,7 +177,7 @@ export default function UserForm() {
                 backgroundColor: progress === 100 ? "#5BA862" : "#ffffff",
               }}
             ></div>
-            <span className="relative z-10">{progress === 100 ? t.success_text : t.submit_text}</span>
+            <span className="relative z-10">{t.submit_text}</span>
           </button>
         </form>
       </div>
